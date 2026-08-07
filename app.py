@@ -58,9 +58,19 @@ def customer_portal():
 
         <script>
             function updateCartCount() {
-                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
-                let totalQty = cart.reduce((sum, item) => sum + parseInt(item.qty), 0);
-                document.getElementById('cart-count').innerText = totalQty;
+                let cart = [];
+                try {
+                    let savedCart = localStorage.getItem('sky_cart');
+                    if (savedCart) {
+                        cart = JSON.parse(savedCart);
+                        if (!Array.isArray(cart)) cart = [];
+                    }
+                } catch (e) {
+                    cart = [];
+                }
+                let totalQty = cart.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+                let countEl = document.getElementById('cart-count');
+                if (countEl) countEl.innerText = totalQty;
             }
             updateCartCount();
         </script>
@@ -135,7 +145,16 @@ def item_detail():
                 let itemPrice = parseFloat("{{ item.price }}");
                 let itemQty = parseInt(document.getElementById('qty').value);
 
-                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let cart = [];
+                try {
+                    let savedCart = localStorage.getItem('sky_cart');
+                    if (savedCart) {
+                        cart = JSON.parse(savedCart);
+                        if (!Array.isArray(cart)) cart = [];
+                    }
+                } catch (e) {
+                    cart = [];
+                }
                 
                 let existingItem = cart.find(i => i.name === itemName);
                 if (existingItem) {
@@ -197,7 +216,17 @@ def view_cart():
 
         <script>
             function loadCart() {
-                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let cart = [];
+                try {
+                    let savedCart = localStorage.getItem('sky_cart');
+                    if (savedCart) {
+                        cart = JSON.parse(savedCart);
+                        if (!Array.isArray(cart)) cart = [];
+                    }
+                } catch (e) {
+                    cart = [];
+                }
+
                 let container = document.getElementById('cart-container');
                 let checkoutSection = document.getElementById('checkout-form-section');
 
@@ -212,8 +241,8 @@ def view_cart():
                 let totalAmount = 0;
 
                 cart.forEach((item, index) => {
-                    let qty = parseInt(item.qty);
-                    let price = parseFloat(item.price);
+                    let qty = parseInt(item.qty || 1);
+                    let price = parseFloat(item.price || 0);
                     let subtotal = price * qty;
                     totalAmount += subtotal;
                     
@@ -241,7 +270,11 @@ def view_cart():
             }
 
             function removeItem(index) {
-                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let cart = [];
+                try {
+                    cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                } catch(e) { cart = []; }
+                
                 cart.splice(index, 1);
                 localStorage.setItem('sky_cart', JSON.stringify(cart));
                 loadCart();
@@ -249,7 +282,11 @@ def view_cart():
 
             function submitOrder(e) {
                 e.preventDefault();
-                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let cart = [];
+                try {
+                    cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                } catch(e) { cart = []; }
+
                 let name = document.getElementById('c_name').value;
                 let phone = document.getElementById('c_phone').value;
                 let address = document.getElementById('c_address').value;
@@ -465,7 +502,7 @@ def add_item():
     image = request.form.get("image")
     
     db = load_data()
-    new_id = len(db["menu"]) + 1
+    new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
     
     db["menu"].append({
         "id": new_id, 
