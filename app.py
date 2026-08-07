@@ -904,8 +904,7 @@ def admin_dashboard():
     </body>
     </html>
     """
-    return 
-render_template_string(html_code, menu=db.get("menu", []), live_orders=live_orders, cleared_orders=cleared_orders, feedbacks=feedbacks, total_orders=total_orders, total_revenue=total_revenue)
+    return render_template_string(html_code, menu=db.get("menu", []), live_orders=live_orders, cleared_orders=cleared_orders, feedbacks=feedbacks, total_orders=total_orders, total_revenue=total_revenue)
 
 @app.route("/admin/add-item", methods=["POST"])
 def add_item():
