@@ -953,7 +953,21 @@ def delete_item(item_id):
 def admin_logout():
     session.pop("logged_in", None)
     return redirect(url_for("admin_login"))
-
+@app.route("/admin/edit-item/<int:item_id>", methods=["POST"])
+def edit_item(item_id):
+    if not session.get("logged_in"): 
+        return redirect(url_for("admin_login"))
+    db = get_db_safe()
+    for m in db["menu"]:
+        if m["id"] == item_id:
+            m["name"] = request.form.get("name", m["name"])
+            m["category"] = request.form.get("category", m["category"])
+            m["price"] = float(request.form.get("price") or m.get("price", 0))
+            if request.form.get("image"):
+                m["image"] = request.form.get("image")
+            break
+    save_data(db)
+    return redirect(url_for("admin_dashboard"))
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
