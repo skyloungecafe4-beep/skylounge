@@ -3,9 +3,9 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_final_update_key"
+app.secret_key = "sky_lounge_livechat_key"
 
-# --- 1. CUSTOMER PORTAL ---
+# --- 1. CUSTOMER PORTAL (With Live Chat & VIP UI) ---
 @app.route("/")
 def customer_portal():
     db = load_data()
@@ -40,7 +40,7 @@ def customer_portal():
             </a>
         </div>
 
-        <main class="max-w-6xl mx-auto p-6 space-y-12">
+        <main class="max-w-6xl mx-auto p-6 space-y-12 mb-20">
             {% for cat_name, items in categories.items() %}
             <section>
                 <div class="border-b border-red-800 pb-2 mb-6">
@@ -76,6 +76,13 @@ def customer_portal():
             {% endfor %}
         </main>
 
+        <div class="fixed bottom-6 right-6 z-50">
+            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge,%20I%20want%20to%20ask%20something%20about%20menu." target="_blank" class="bg-green-600 hover:bg-green-500 text-white px-5 py-3.5 rounded-full shadow-2xl font-bold flex items-center gap-3 transition transform hover:scale-105 border-2 border-white/20">
+                <span class="text-2xl">💬</span>
+                <span class="text-sm tracking-wide">Live Chat with Us</span>
+            </a>
+        </div>
+
         <script>
             function updateCartCount() {
                 let cart = [];
@@ -99,7 +106,7 @@ def customer_portal():
     """
     return render_template_string(html_code, categories=categories)
 
-# --- 2. ITEM DETAIL POPUP (Size & Variant Handling) ---
+# --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
 def item_detail():
     db = load_data()
@@ -178,13 +185,11 @@ def item_detail():
                 let price = select.options[select.selectedIndex].getAttribute('data-price');
                 document.getElementById('display-price').innerText = "Rs. " + price;
             }
-
             function updateStarterPrice() {
                 let select = document.getElementById('starter-pc');
                 let price = select.options[select.selectedIndex].getAttribute('data-price');
                 document.getElementById('display-price').innerText = "Rs. " + price;
             }
-
             function increaseQty() {
                 let input = document.getElementById('qty');
                 let val = parseInt(input.value);
@@ -195,7 +200,6 @@ def item_detail():
                 let val = parseInt(input.value);
                 if(val > 1) input.value = val - 1;
             }
-
             function addToCart() {
                 let baseName = "{{ item.name }}";
                 let itemCategory = "{{ item.category }}";
@@ -215,17 +219,7 @@ def item_detail():
                 }
 
                 let itemQty = parseInt(document.getElementById('qty').value);
-
-                let cart = [];
-                try {
-                    let savedCart = localStorage.getItem('sky_cart');
-                    if (savedCart) {
-                        cart = JSON.parse(savedCart);
-                        if (!Array.isArray(cart)) cart = [];
-                    }
-                } catch (e) {
-                    cart = [];
-                }
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
                 
                 let existingItem = cart.find(i => i.name === finalName);
                 if (existingItem) {
@@ -265,11 +259,11 @@ def view_cart():
                 <form onsubmit="submitOrder(event)" class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Your Full Name</label>
-                        <input type="text" id="c_name" placeholder="e.g. Ali Khan" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
+                        <input type="text" id="c_name" placeholder="e.g. Asad Ali" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Phone Number</label>
-                        <input type="text" id="c_phone" placeholder="e.g. 03001234567" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
+                        <input type="text" id="c_phone" placeholder="e.g. 03093478600" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Delivery Address</label>
@@ -287,17 +281,7 @@ def view_cart():
 
         <script>
             function loadCart() {
-                let cart = [];
-                try {
-                    let savedCart = localStorage.getItem('sky_cart');
-                    if (savedCart) {
-                        cart = JSON.parse(savedCart);
-                        if (!Array.isArray(cart)) cart = [];
-                    }
-                } catch (e) {
-                    cart = [];
-                }
-
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
                 let container = document.getElementById('cart-container');
                 let checkoutSection = document.getElementById('checkout-form-section');
 
@@ -341,11 +325,7 @@ def view_cart():
             }
 
             function removeItem(index) {
-                let cart = [];
-                try {
-                    cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
-                } catch(e) { cart = []; }
-                
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
                 cart.splice(index, 1);
                 localStorage.setItem('sky_cart', JSON.stringify(cart));
                 loadCart();
@@ -353,11 +333,7 @@ def view_cart():
 
             function submitOrder(e) {
                 e.preventDefault();
-                let cart = [];
-                try {
-                    cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
-                } catch(e) { cart = []; }
-
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
                 let name = document.getElementById('c_name').value;
                 let phone = document.getElementById('c_phone').value;
                 let address = document.getElementById('c_address').value;
@@ -401,34 +377,58 @@ def save_order():
     save_data(db)
     return {"success": True}
 
-# --- 5. ORDER SUCCESS & WHATSAPP (Configured to 03093478600) ---
+# --- 5. VIP ORDER SUCCESS & WHATSAPP MODAL ---
 @app.route("/order-success")
 def order_success():
     c_name = request.args.get("name")
     items_desc = request.args.get("items")
     total_amount = request.args.get("total")
     c_address = request.args.get("address")
+    c_phone = request.args.get("phone")
     
     success_html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Order Confirmed</title>
+        <title>VIP Order Confirmed - Sky Lounge</title>
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body class="bg-gray-950 text-white flex items-center justify-center h-screen p-4">
-        <div class="text-center bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-md w-full">
-            <h1 class="text-3xl font-black text-green-500 mb-2">Order Confirmed! 🎉</h1>
-            <p class="text-gray-400 mb-6 text-sm">Aapka bucket order mil gaya hai! Jald deliver kar diya jaye ga.</p>
+    <body class="bg-gray-950 text-white flex items-center justify-center min-h-screen p-4">
+        <div class="bg-gradient-to-b from-gray-900 to-black border-2 border-yellow-500/50 p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center relative overflow-hidden">
+            
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-500/20 rounded-full blur-2xl"></div>
+            
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-yellow-400/10 border border-yellow-400 rounded-full text-yellow-400 text-4xl mb-4 shadow-inner">
+                👑
+            </div>
+
+            <h1 class="text-3xl font-black text-yellow-400 tracking-wider mb-1">VIP ORDER CONFIRMED!</h1>
+            <p class="text-red-400 text-sm font-semibold uppercase tracking-widest mb-6">Sky Lounge • Saima Mor, Kasur</p>
+            
+            <div class="bg-gray-800/80 border border-gray-700/80 p-5 rounded-2xl text-left space-y-2 mb-6 text-sm">
+                <p class="text-gray-300"><strong>Customer:</strong> {c_name}</p>
+                <p class="text-gray-300"><strong>Phone:</strong> {c_phone}</p>
+                <p class="text-gray-300"><strong>Delivery Address:</strong> {c_address}</p>
+                <div class="border-t border-gray-700 pt-2 mt-2">
+                    <p class="text-yellow-300 font-bold">Ordered Items:</p>
+                    <p class="text-gray-200">{items_desc}</p>
+                </div>
+                <div class="border-t border-gray-700 pt-2 flex justify-between items-center text-base font-black">
+                    <span class="text-white">Total Amount:</span>
+                    <span class="text-green-400 text-lg">Rs. {total_amount}</span>
+                </div>
+            </div>
+
+            <p class="text-gray-400 text-xs mb-4">Aapka order receive ho gaya hai! Mazeed foran rabta karne ke liye WhatsApp button dabayein.</p>
             
             <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge,%20My%20name%20is%20{c_name}.%20I%20ordered:%20{items_desc}.%20Total:%20Rs.{total_amount}.%20Address:%20{c_address}" 
                target="_blank" 
-               class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-3 shadow">
-                💬 Send Order via WhatsApp
+               class="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-4 rounded-xl transition mb-3 shadow-lg flex items-center justify-center gap-2 text-base">
+                <span>💬 Send Order via WhatsApp (VIP)</span>
             </a>
 
-            <a href="/" class="block w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-xl transition">Back to Sky Lounge</a>
+            <a href="/" class="block w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-3 rounded-xl transition text-sm">← Return to Sky Lounge Menu</a>
         </div>
     </body>
     </html>
@@ -577,7 +577,7 @@ def admin_dashboard():
                                 <span class="truncate max-w-[150px]">{{ item.name }}</span>
                             </div>
                             <form action="/admin/delete-item/{{ item.id }}" method="POST">
-                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</button>
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</label>
                             </form>
                         </div>
                         {% endfor %}
@@ -638,13 +638,13 @@ def add_item():
         except: newItem["price_m"] = 0.0
         try: newItem["price_l"] = float(request.form.get("price_l", 0))
         except: newItem["price_l"] = 0.0
-        newItem["price"] = newItem["price_m"] # default fallback
+        newItem["price"] = newItem["price_m"]
     elif category == 'Starters':
         try: newItem["price_5pc"] = float(request.form.get("price_5pc", 0))
         except: newItem["price_5pc"] = 0.0
         try: newItem["price_10pc"] = float(request.form.get("price_10pc", 0))
         except: newItem["price_10pc"] = 0.0
-        newItem["price"] = newItem["price_5pc"] # default fallback
+        newItem["price"] = newItem["price_5pc"]
     else:
         try: newItem["price"] = float(request.form.get("price", 0))
         except: newItem["price"] = 0.0
