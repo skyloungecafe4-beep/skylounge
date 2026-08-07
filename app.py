@@ -3,12 +3,27 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_final_pro_key"
+app.secret_key = "sky_lounge_cinemamor_key"
+
+# --- DEFAULT MENU BACKUP (Data kabhi nahi udega) ---
+DEFAULT_MENU = [
+    {"id": 1, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Crispy chicken fillet with special sauce.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"},
+    {"id": 2, "category": "Burgers", "name": "Lava Burger", "price": 1000, "desc": "Juicy double patty dripping with cheese.", "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500"},
+    {"id": 3, "category": "Pizza", "name": "Chicken Supreme", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "category": "Pizza", "desc": "Loaded with chicken, mushrooms, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500"},
+    {"id": 4, "category": "Starters", "name": "Hot Crispy Wings", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy chicken wings.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=500"}
+]
+
+def get_db_safe():
+    db = load_data()
+    if not db.get("menu"):
+        db["menu"] = DEFAULT_MENU
+        save_data(db)
+    return db
 
 # --- 1. CUSTOMER PORTAL ---
 @app.route("/")
 def customer_portal():
-    db = load_data()
+    db = get_db_safe()
     
     categories = {}
     for item in db["menu"]:
@@ -29,7 +44,7 @@ def customer_portal():
     <body class="bg-gray-950 text-white min-h-screen font-sans">
         <header class="bg-gradient-to-r from-red-900 via-red-700 to-black shadow-2xl py-6 px-6 text-center border-b border-red-800">
             <h1 class="text-4xl md:text-6xl font-black tracking-widest text-yellow-400 drop-shadow-lg">SKY LOUNGE</h1>
-            <p class="text-yellow-200 text-xs md:text-sm mt-1 font-semibold tracking-wider">📍 Saima Mor, Opp PSO Petrol Pump, Kasur</p>
+            <p class="text-yellow-200 text-xs md:text-sm mt-1 font-semibold tracking-wider">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
             <p class="text-gray-300 text-xs md:text-sm mt-1 font-medium">Taste the Luxury • Order Fresh & Hot</p>
         </header>
 
@@ -56,11 +71,11 @@ def customer_portal():
                                 <h3 class="text-lg font-bold text-white">{{ item.name }}</h3>
                                 <p class="text-red-500 font-extrabold text-lg mt-1">
                                     {% if item.category == 'Pizza' %}
-                                        From Rs. {{ item.price_s }}
+                                        From Rs. {{ item.get('price_s', item.get('price', 0)) }}
                                     {% elif item.category == 'Starters' %}
-                                        Rs. {{ item.price_5pc }} (5pc)
+                                        Rs. {{ item.get('price_5pc', item.get('price', 0)) }} (5pc)
                                     {% else %}
-                                        Rs. {{ item.price }}
+                                        Rs. {{ item.get('price', 0) }}
                                     {% endif %}
                                 </p>
                             </div>
@@ -109,7 +124,7 @@ def customer_portal():
 # --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
 def item_detail():
-    db = load_data()
+    db = get_db_safe()
     try:
         item_id = int(request.args.get("id"))
     except:
@@ -142,25 +157,25 @@ def item_detail():
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Size</label>
                         <select id="pizza-size" onchange="updatePizzaPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
-                            <option value="Small (S)" data-price="{{ item.price_s }}">Small (S) - Rs. {{ item.price_s }}</option>
-                            <option value="Medium (M)" data-price="{{ item.price_m }}" selected>Medium (M) - Rs. {{ item.price_m }}</option>
-                            <option value="Large (L)" data-price="{{ item.price_l }}">Large (L) - Rs. {{ item.price_l }}</option>
+                            <option value="Small (S)" data-price="{{ item.get('price_s', 0) }}">Small (S) - Rs. {{ item.get('price_s', 0) }}</option>
+                            <option value="Medium (M)" data-price="{{ item.get('price_m', item.get('price', 0)) }}" selected>Medium (M) - Rs. {{ item.get('price_m', item.get('price', 0)) }}</option>
+                            <option value="Large (L)" data-price="{{ item.get('price_l', 0) }}">Large (L) - Rs. {{ item.get('price_l', 0) }}</option>
                         </select>
                     </div>
-                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_m }}</p>
+                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.get('price_m', item.get('price', 0)) }}</p>
 
                     {% elif item.category == 'Starters' %}
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Portion / Pieces</label>
                         <select id="starter-pc" onchange="updateStarterPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
-                            <option value="5 Pieces" data-price="{{ item.price_5pc }}">5 Pieces - Rs. {{ item.price_5pc }}</option>
-                            <option value="10 Pieces" data-price="{{ item.price_10pc }}">10 Pieces - Rs. {{ item.price_10pc }}</option>
+                            <option value="5 Pieces" data-price="{{ item.get('price_5pc', item.get('price', 0)) }}">5 Pieces - Rs. {{ item.get('price_5pc', item.get('price', 0)) }}</option>
+                            <option value="10 Pieces" data-price="{{ item.get('price_10pc', 0) }}">10 Pieces - Rs. {{ item.get('price_10pc', 0) }}</option>
                         </select>
                     </div>
-                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_5pc }}</p>
+                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.get('price_5pc', item.get('price', 0)) }}</p>
 
                     {% else %}
-                    <p class="text-red-500 font-extrabold text-2xl">Rs. {{ item.price }}</p>
+                    <p class="text-red-500 font-extrabold text-2xl">Rs. {{ item.get('price', 0) }}</p>
                     {% endif %}
 
                     <div>
@@ -204,7 +219,7 @@ def item_detail():
                 let baseName = "{{ item.name }}";
                 let itemCategory = "{{ item.category }}";
                 let variant = "";
-                let itemPrice = parseFloat("{{ item.price if item.category not in ['Pizza', 'Starters'] else item.price_m }}");
+                let itemPrice = parseFloat("{{ item.get('price', item.get('price_m', item.get('price_5pc', 0))) }}");
 
                 if (itemCategory === 'Pizza') {
                     let select = document.getElementById('pizza-size');
@@ -339,7 +354,6 @@ def view_cart():
 
                 let totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty)), 0);
                 
-                // One by one items list format for database and display
                 let itemsDescArray = cart.map(i => `${i.qty}x ${i.name}` + (i.variant ? ` (${i.variant})` : '') + ` - Rs.${i.price * i.qty}`);
                 let itemsDesc = itemsDescArray.join(', ');
 
@@ -368,7 +382,7 @@ def view_cart():
 @app.route("/save-order", methods=["POST"])
 def save_order():
     data = request.json
-    db = load_data()
+    db = get_db_safe()
     db["orders"].append({
         "item": data["items"],
         "price": data["price"],
@@ -393,15 +407,13 @@ def order_success():
     except:
         cart_items = []
 
-    # UI Display list (one by one)
     ui_items_html = ""
     for item in cart_items:
         sub = float(item['price']) * int(item['qty'])
         var_text = f" ({item['variant']})" if item.get('variant') else ""
         ui_items_html += f"<p class='text-gray-200 border-b border-gray-700/50 pb-1'>• <strong>{item['qty']}x</strong> {item['name']}{var_text} — <span class='text-yellow-400'>Rs. {sub}</span></p>"
 
-    # Professional WhatsApp formatted message (one by one items with rates)
-    wa_message = f"🍔 *NEW ORDER - SKY LOUNGE* 🍔\n📍 *Saima Mor, Kasur*\n\n👤 *Customer Name:* {c_name}\n📞 *Phone:* {c_phone}\n🏠 *Address:* {c_address}\n\n🛒 *Ordered Items:*\n"
+    wa_message = f"🍔 *NEW ORDER - SKY LOUNGE* 🍔\n📍 *Cinema Mor, Kasur*\n\n👤 *Customer Name:* {c_name}\n📞 *Phone:* {c_phone}\n🏠 *Address:* {c_address}\n\n🛒 *Ordered Items:*\n"
     for item in cart_items:
         sub = float(item['price']) * int(item['qty'])
         var_text = f" ({item['variant']})" if item.get('variant') else ""
@@ -430,7 +442,7 @@ def order_success():
             </div>
 
             <h1 class="text-3xl font-black text-yellow-400 tracking-wider mb-1">VIP ORDER CONFIRMED!</h1>
-            <p class="text-red-400 text-sm font-semibold uppercase tracking-widest mb-6">Sky Lounge • Saima Mor, Kasur</p>
+            <p class="text-red-400 text-sm font-semibold uppercase tracking-widest mb-6">Sky Lounge • Cinema Mor, Kasur</p>
             
             <div class="bg-gray-800/80 border border-gray-700/80 p-5 rounded-2xl text-left space-y-2 mb-6 text-sm">
                 <p class="text-gray-300"><strong>Customer:</strong> {c_name}</p>
@@ -500,7 +512,7 @@ def admin_dashboard():
     if not session.get("logged_in"):
         return redirect(url_for("admin_login"))
         
-    db = load_data()
+    db = get_db_safe()
     total_revenue = sum(order["price"] for order in db["orders"])
     total_orders = len(db["orders"])
     
@@ -647,7 +659,7 @@ def add_item():
     name = request.form.get("name")
     image = request.form.get("image")
     
-    db = load_data()
+    db = get_db_safe()
     new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
     
     newItem = {
@@ -685,7 +697,7 @@ def delete_item(item_id):
     if not session.get("logged_in"):
         return redirect(url_for("admin_login"))
     
-    db = load_data()
+    db = get_db_safe()
     db["menu"] = [m for m in db["menu"] if m["id"] != item_id]
     save_data(db)
     return redirect(url_for("admin_dashboard"))
