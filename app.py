@@ -3,7 +3,7 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_final_v3"
+app.secret_key = "sky_lounge_vip_slider_key_final_v5"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
@@ -37,13 +37,14 @@ def customer_portal():
             categories[cat] = []
         categories[cat].append(item)
 
+    # 100% Working Slider Images (Replaced 4th and 6th with solid links)
     slider_images = [
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920",
         "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920",
         "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1920",
-        "https://images.unsplash.com/photo-1606131731446-556878211c40?q=80&w=1920",
+        "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1920",
         "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920",
-        "https://images.unsplash.com/photo-1626777557648-c8136d91e3a0?q=80&w=1920",
+        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1920",
         "https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=1920",
         "https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?q=80&w=1920"
     ]
@@ -248,13 +249,14 @@ def owner_detail():
                 👑
             </div>
             
-            <h1 class="text-2xl font-black text-yellow-400 uppercase tracking-wide">Asad Ali</h1>
-            <p class="text-red-400 text-xs font-bold mt-1 tracking-widest uppercase">Founder & Managing Director</p>
+            <h1 class="text-xl font-black text-yellow-400 uppercase tracking-wide">Haji Abdul Ghaffar</h1>
+            <p class="text-red-400 text-xs font-bold mt-1 tracking-wider uppercase">& Haji Ali Raza (Saudia)</p>
+            <p class="text-gray-400 text-[10px] font-semibold mt-0.5">Management / Owners</p>
             
             <div class="bg-gray-800 p-4 rounded-2xl text-left space-y-2.5 my-5 text-xs border border-gray-700">
                 <p class="text-gray-300"><strong>Café:</strong> Sky Lounge Cafe</p>
                 <p class="text-gray-300"><strong>Location:</strong> Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
-                <p class="text-gray-300"><strong>Contact:</strong> <a href="tel:923093478600" class="text-yellow-400 underline">+92 309 3478600</a></p>
+                <p class="text-gray-300"><strong>Contact:</strong> <a href="tel:03214315914" class="text-yellow-400 underline">0321 4315914</a></p>
                 <p class="text-gray-300"><strong>Special Message:</strong> <span class="italic text-gray-400">"Serving the finest taste and best ambience in Kasur with absolute customer satisfaction."</span></p>
             </div>
 
@@ -714,7 +716,6 @@ def admin_dashboard():
     db = get_db_safe()
     
     orders = db.get("orders", [])
-    # Separate pending and cleared orders
     live_orders = [o for o in orders if o.get("status", "pending") == "pending"]
     cleared_orders = [o for o in orders if o.get("status") == "cleared"]
 
@@ -745,7 +746,7 @@ def admin_dashboard():
             </div>
 
             <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-yellow-300">⭐ Customer Feedbacks</h2>
+                <h2 class="text-lg font-semibold mb-3 text-yellow-300">⭐ Customer Feedbacks (Customer Kya Keh Rahe Hain)</h2>
                 {% if feedbacks %}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
                     {% for fb in feedbacks %}
