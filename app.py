@@ -1,50 +1,42 @@
 from flask import Flask, redirect, render_template_string, request, session, url_for
 import os
-import base64
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_v12"
+app.secret_key = "sky_lounge_vip_slider_key"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
     {"id": 1, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Crispy chicken fillet with special sauce.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
-    {"id": 2, "category": "Pizza", "name": "Chicken Supreme (M)", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "desc": "Loaded with chicken, mushrooms, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
+    {"id": 2, "category": "Pizza", "name": "Chicken Supreme (M)", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "category": "Pizza", "desc": "Loaded with chicken, mushrooms, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
     {"id": 3, "category": "Starters", "name": "Hot Crispy Wings (5pc)", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy chicken wings.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"}
-]
-
-DEFAULT_SLIDERS = [
-    {"id": 1, "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920"},
-    {"id": 2, "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920"},
-    {"id": 3, "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1920"}
 ]
 
 def get_db_safe():
     db = load_data()
-    if not isinstance(db, dict):
-        db = {}
-    if "menu" not in db or not db["menu"]:
+    if not db.get("menu"):
         db["menu"] = DEFAULT_MENU
-    if "sliders" not in db or not db["sliders"] or len(db["sliders"]) == 0:
-        db["sliders"] = DEFAULT_SLIDERS
-    if "orders" not in db:
-        db["orders"] = []
-    save_data(db)
+        save_data(db)
     return db
 
-# --- 1. CUSTOMER PORTAL ---
+# --- 1. CUSTOMER PORTAL (KFC Style Top Banner Slider & Menu) ---
 @app.route("/")
 def customer_portal():
     db = get_db_safe()
     
     categories = {}
-    for item in db.get("menu", DEFAULT_MENU):
+    for item in db["menu"]:
         cat = item.get("category", "Others")
         if cat not in categories:
             categories[cat] = []
         categories[cat].append(item)
 
-    slider_list = db.get("sliders", DEFAULT_SLIDERS)
+    # Aapke restaurant ki real pictures jo aapne bheji hain
+    slider_images = [
+        url_for('static', filename='img1.png') if os.path.exists('static/img1.png') else "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920",
+        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920",
+        "https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=1920"
+    ]
 
     html_code = """
     <!DOCTYPE html>
@@ -52,52 +44,48 @@ def customer_portal():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sky Lounge Cafe - Kasur</title>
+        <title>Sky Lounge VIP - Kasur</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; }
-            @media(min-width: 768px) { .slider-container { height: 420px; } }
-            .slider-wrapper { display: flex; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; width: 100%; }
-            .slide { min-width: 100%; height: 100%; flex-shrink: 0; }
+            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; md:height: 380px; }
+            .slider-wrapper { display: flex; transition: transform 0.6s ease-in-out; height: 100%; }
+            .slide { min-width: 100%; height: 100%; }
             .slide img { width: 100%; height: 100%; object-fit: cover; }
-            .slider-nav { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-            .nav-dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
-            .nav-dot.active { background: #e11d48; width: 25px; border-radius: 5px; }
+            .slider-nav { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
+            .nav-dot { width: 9px; height: 9px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; }
+            .nav-dot.active { background: #e11d48; width: 22px; border-radius: 4px; }
         </style>
     </head>
     <body class="bg-gray-950 text-white min-h-screen font-sans">
         
         <div class="bg-gray-900 border-b border-gray-800 py-3 px-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
             <div class="flex items-center gap-2">
-                <span class="text-sm font-black tracking-widest text-yellow-400 uppercase">⚡ SKY LOUNGE CAFE</span>
+                <span class="text-xl">👑</span>
+                <span class="font-black tracking-wider text-yellow-400 text-lg">SKY LOUNGE</span>
             </div>
             <a href="/cart" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-black text-xs transition shadow flex items-center gap-1.5">
                 🛒 BUCKET (<span id="cart-count">0</span>)
             </a>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 pt-6 pb-2 space-y-4">
-            
-            <div class="bg-gradient-to-r from-red-950 via-gray-900 to-gray-950 py-6 px-4 text-center rounded-3xl border border-red-900/50 shadow-xl">
-                <h1 class="text-3xl md:text-6xl font-black tracking-widest text-yellow-400 uppercase drop-shadow-lg">SKY LOUNGE CAFE</h1>
-                <p class="text-gray-200 text-xs md:text-base mt-2 font-bold tracking-wide">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
-            </div>
-
-            <div class="bg-gray-900 rounded-3xl overflow-hidden border border-yellow-500/25 shadow-2xl">
-                <div class="slider-container bg-black" id="main-slider">
-                    <div class="slider-wrapper" id="slider-wrapper">
-                        {% for s in slider_list %}
-                        <div class="slide"><img src="{{ s.image }}" alt="Cafe Menu Slide"></div>
-                        {% endfor %}
-                    </div>
-                    <div class="slider-nav" id="slider-dots">
-                        {% for s in slider_list %}
-                        <span class="nav-dot {% if loop.first %}active{% endif %}" onclick="currentSlide({{ loop.index0 }})"></span>
-                        {% endfor %}
-                    </div>
+        <div class="w-full bg-gray-900 shadow-2xl relative">
+            <div class="slider-container max-w-7xl mx-auto">
+                <div class="slider-wrapper" id="slider-wrapper">
+                    <div class="slide"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920" alt="Sky Lounge Interior"></div>
+                    <div class="slide"><img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920" alt="Sky Lounge Vibe"></div>
+                    <div class="slide"><img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1920" alt="Special Deal"></div>
+                </div>
+                <div class="slider-nav">
+                    <span class="nav-dot active" onclick="currentSlide(0)"></span>
+                    <span class="nav-dot" onclick="currentSlide(1)"></span>
+                    <span class="nav-dot" onclick="currentSlide(2)"></span>
                 </div>
             </div>
+        </div>
 
+        <div class="bg-gradient-to-r from-red-950 via-gray-900 to-gray-950 py-4 px-6 text-center border-b border-red-900/50">
+            <h1 class="text-3xl md:text-5xl font-black tracking-widest text-yellow-400">SKY LOUNGE</h1>
+            <p class="text-gray-300 text-xs md:text-sm mt-1 font-medium">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
         </div>
 
         <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-10 mb-20">
@@ -145,29 +133,21 @@ def customer_portal():
         </main>
 
         <div class="fixed bottom-5 right-5 z-50">
-            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge%20Cafe,%20I%20want%20to%20order." target="_blank" class="bg-green-600 hover:bg-green-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-110 border-2 border-white/20">
+            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge,%20I%20want%20to%20order." target="_blank" class="bg-green-600 hover:bg-green-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-110 border-2 border-white/20">
                 <span class="text-xl">💬</span>
             </a>
         </div>
 
         <script>
             let slideIndex = 0;
-            const slidesWrapper = document.getElementById('slider-wrapper');
-            const totalSlides = slidesWrapper ? slidesWrapper.children.length : 0;
+            const slides = document.getElementById('slider-wrapper');
             const dots = document.querySelectorAll('.nav-dot');
 
             function showSlides() {
-                if(!slidesWrapper || totalSlides === 0) return;
-                if(slideIndex >= totalSlides) slideIndex = 0;
-                if(slideIndex < 0) slideIndex = totalSlides - 1;
-                
-                slidesWrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
-                dots.forEach((dot, idx) => {
-                    if(dot) {
-                        if(idx === slideIndex) dot.classList.add('active');
-                        else dot.classList.remove('active');
-                    }
-                });
+                if(!slides) return;
+                slides.style.transform = `translateX(-${slideIndex * 100}%)`;
+                dots.forEach(dot => dot.classList.remove('active'));
+                if(dots[slideIndex]) dots[slideIndex].classList.add('active');
             }
 
             function currentSlide(n) {
@@ -175,12 +155,12 @@ def customer_portal():
                 showSlides();
             }
 
-            if(totalSlides > 1) {
-                setInterval(() => {
-                    slideIndex = (slideIndex + 1) % totalSlides;
+            setInterval(() => {
+                if(slides && slides.children.length > 0) {
+                    slideIndex = (slideIndex + 1) % slides.children.length;
                     showSlides();
-                }, 4000);
-            }
+                }
+            }, 4000);
 
             function updateCartCount() {
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
@@ -193,7 +173,7 @@ def customer_portal():
     </body>
     </html>
     """
-    return render_template_string(html_code, categories=categories, slider_list=slider_list)
+    return render_template_string(html_code, categories=categories)
 
 # --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
@@ -202,7 +182,7 @@ def item_detail():
     try: item_id = int(request.args.get("id"))
     except: return redirect("/")
         
-    selected_item = next((item for item in db.get("menu", []) if item["id"] == item_id), None)
+    selected_item = next((item for item in db["menu"] if item["id"] == item_id), None)
     if not selected_item: return redirect("/")
         
     html_code = """
@@ -210,7 +190,7 @@ def item_detail():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>{{ item.name }} - Sky Lounge Cafe</title>
+        <title>{{ item.name }} - Sky Lounge VIP</title>
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-black/85 text-white min-h-screen flex items-center justify-center p-4">
@@ -327,7 +307,7 @@ def view_cart():
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Your Bucket - Sky Lounge Cafe</title>
+        <title>Your Bucket - Sky Lounge VIP</title>
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-gray-950 text-white min-h-screen p-4 font-sans flex items-center justify-center">
@@ -367,3 +347,338 @@ def view_cart():
                 let checkoutSection = document.getElementById('checkout-form-section');
 
                 if (cart.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400 py-6 text-sm">Your bucket is empty!</p>';
+                    checkoutSection.style.display = 'none';
+                    return;
+                }
+
+                checkoutSection.style.display = 'block';
+                let html = '<div class="space-y-3 mb-4 max-h-48 overflow-y-auto">';
+                let totalAmount = 0;
+
+                cart.forEach((item, index) => {
+                    let qty = parseInt(item.qty || 1);
+                    let price = parseFloat(item.price || 0);
+                    let subtotal = price * qty;
+                    totalAmount += subtotal;
+                    let displayTitle = item.name + (item.variant ? ` (${item.variant})` : '');
+                    
+                    html += `
+                        <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center border border-gray-700 text-sm">
+                            <div>
+                                <h4 class="font-bold text-white">${displayTitle}</h4>
+                                <p class="text-xs text-gray-400">Rs. ${price} x ${qty}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-yellow-400 font-bold">Rs. ${subtotal}</span>
+                                <button type="button" onclick="removeItem(${index})" class="text-red-500 text-xs font-bold bg-gray-700 w-7 h-7 rounded-lg flex items-center justify-center">✕</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>
+                    <div class="border-t border-gray-800 pt-3 flex justify-between text-lg font-black">
+                        <span>Total:</span>
+                        <span class="text-green-400">Rs. ${totalAmount}</span>
+                    </div>
+                `;
+                container.innerHTML = html;
+            }
+
+            function removeItem(index) {
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
+                cart.splice(index, 1);
+                localStorage.setItem('sky_cart', JSON.stringify(cart));
+                loadCart();
+            }
+
+            function submitOrder(e) {
+                e.preventDefault();
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
+                let name = document.getElementById('c_name').value;
+                let phone = document.getElementById('c_phone').value;
+                let address = document.getElementById('c_address').value;
+
+                let totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty)), 0);
+                let itemsDescArray = cart.map(i => `${i.qty}x ${i.name}` + (i.variant ? ` (${i.variant})` : '') + ` - Rs.${i.price * i.qty}`);
+                let itemsDesc = itemsDescArray.join(', ');
+
+                fetch('/save-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, address, items: itemsDesc, price: totalAmount })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        localStorage.removeItem('sky_cart');
+                        window.location.href = `/order-success?name=${encodeURIComponent(name)}&items=${encodeURIComponent(JSON.stringify(cart))}&total=${totalAmount}&phone=${phone}&address=${encodeURIComponent(address)}`;
+                    }
+                });
+            }
+
+            loadCart();
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html_code)
+
+# --- 4. SAVE ORDER ROUTE ---
+@app.route("/save-order", methods=["POST"])
+def save_order():
+    data = request.json
+    db = get_db_safe()
+    db["orders"].append({
+        "item": data["items"],
+        "price": data["price"],
+        "name": data["name"],
+        "phone": data["phone"],
+        "address": data["address"]
+    })
+    save_data(db)
+    return {"success": True}
+
+# --- 5. ORDER SUCCESS & WHATSAPP MESSAGE ---
+@app.route("/order-success")
+def order_success():
+    import urllib.parse
+    import json
+    c_name = request.args.get("name")
+    total_amount = request.args.get("total")
+    c_address = request.args.get("address")
+    c_phone = request.args.get("phone")
+    
+    try: cart_items = json.loads(request.args.get("items", "[]"))
+    except: cart_items = []
+
+    ui_items_html = ""
+    for item in cart_items:
+        sub = float(item['price']) * int(item['qty'])
+        var_text = f" ({item['variant']})" if item.get('variant') else ""
+        ui_items_html += f"<p class='text-gray-200 border-b border-gray-700/50 pb-1 text-xs'>• <strong>{item['qty']}x</strong> {item['name']}{var_text} — <span class='text-yellow-400'>Rs. {sub}</span></p>"
+
+    wa_message = f"🍔 *NEW ORDER - SKY LOUNGE* 🍔\n📍 *Cinema Mor, Kasur*\n\n👤 *Customer Name:* {c_name}\n📞 *Phone:* {c_phone}\n🏠 *Address:* {c_address}\n\n🛒 *Ordered Items:*\n"
+    for item in cart_items:
+        sub = float(item['price']) * int(item['qty'])
+        var_text = f" ({item['variant']})" if item.get('variant') else ""
+        wa_message += f"▪ {item['qty']}x {item['name']}{var_text} - Rs.{sub}\n"
+    wa_message += f"\n💰 *Total Amount:* Rs. {total_amount}\n\n_Please confirm and dispatch order quickly!_"
+    
+    encoded_wa_msg = urllib.parse.quote(wa_message)
+    
+    success_html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Order Confirmed - Sky Lounge</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-950 text-white flex items-center justify-center min-h-screen p-4">
+        <div class="bg-gray-900 border border-yellow-500/40 p-6 rounded-3xl shadow-2xl max-w-md w-full text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-400/10 border border-yellow-400 rounded-full text-yellow-400 text-2xl mb-3">👑</div>
+            <h1 class="text-2xl font-black text-yellow-400 mb-1">ORDER CONFIRMED!</h1>
+            <p class="text-red-400 text-xs font-semibold mb-4">Sky Lounge • Kasur</p>
+            
+            <div class="bg-gray-800 p-4 rounded-2xl text-left space-y-2 mb-5 text-xs">
+                <p class="text-gray-300"><strong>Customer:</strong> {c_name}</p>
+                <p class="text-gray-300"><strong>Phone:</strong> {c_phone}</p>
+                <p class="text-gray-300"><strong>Address:</strong> {c_address}</p>
+                <div class="border-t border-gray-700 pt-2 mt-2 space-y-1">
+                    <p class="text-yellow-300 font-bold mb-1">Items:</p>
+                    {ui_items_html}
+                </div>
+                <div class="border-t border-gray-700 pt-2 flex justify-between font-black text-sm mt-2">
+                    <span>Total:</span>
+                    <span class="text-green-400">Rs. {total_amount}</span>
+                </div>
+            </div>
+
+            <a href="https://wa.me/923093478600?text={encoded_wa_msg}" target="_blank" class="block w-full bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-xl transition mb-2.5 shadow text-sm">💬 Send Order via WhatsApp</a>
+            <a href="/" class="block w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2.5 rounded-xl transition text-xs">← Back to Menu</a>
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(success_html)
+
+# --- 6. ADMIN PANEL ---
+@app.route("/admin", methods=["GET", "POST"])
+def admin_login():
+    error = None
+    if request.method == "POST":
+        if request.form.get("password") == "asad123":
+            session["logged_in"] = True
+            return redirect(url_for("admin_dashboard"))
+        else:
+            error = "Galat Password!"
+            
+    login_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin Login - Sky Lounge</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-950 text-white flex items-center justify-center h-screen p-4">
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <h2 class="text-2xl font-black text-yellow-400 mb-2">🔒 Admin Login</h2>
+            <form action="/admin" method="POST" class="space-y-4 mt-4">
+                <input type="password" name="password" placeholder="Enter Password" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-center tracking-widest text-sm">
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow transition text-sm">Login</button>
+            </form>
+            <div class="mt-4"><a href="/" class="text-xs text-gray-500 hover:text-gray-300">← Back to Portal</a></div>
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(login_html, error=error)
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+    if not session.get("logged_in"): return redirect(url_for("admin_login"))
+    db = get_db_safe()
+    total_revenue = sum(order["price"] for order in db["orders"])
+    total_orders = len(db["orders"])
+    
+    html_code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Sky Lounge - Admin Dashboard</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-900 text-white min-h-screen p-4 md:p-6">
+        <div class="max-w-6xl mx-auto">
+            <header class="flex justify-between items-center mb-6 border-b border-gray-800 pb-4">
+                <h1 class="text-xl md:text-2xl font-bold text-yellow-400">✨ Admin Dashboard</h1>
+                <a href="/admin/logout" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold text-xs">Logout</a>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Total Orders</p><h3 class="text-2xl font-bold text-yellow-400">{{ total_orders }}</h3></div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Total Revenue</p><h3 class="text-2xl font-bold text-green-400">Rs. {{ total_revenue }}</h3></div>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Menu Items</p><h3 class="text-2xl font-bold text-blue-400">{{ menu|length }}</h3></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">📦 Live Orders</h2>
+                    {% if orders %}
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto">
+                            {% for order in orders %}
+                            <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 text-xs">
+                                <div class="flex justify-between items-center mb-1"><h4 class="font-bold text-yellow-400">Items:</h4><span class="bg-green-500 text-gray-900 px-2 py-0.5 rounded font-bold">Rs. {{ order.price }}</span></div>
+                                <p class="text-gray-200 bg-gray-800 p-2 rounded mb-2">{{ order.item }}</p>
+                                <div class="text-gray-300 space-y-0.5 border-t border-gray-600 pt-1">
+                                    <p><strong>Name:</strong> {{ order.name }}</p>
+                                    <p><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-blue-400 underline">{{ order.phone }}</a></p>
+                                    <p><strong>Address:</strong> {{ order.address }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}<p class="text-gray-400 text-xs">No pending orders.</p>{% endif %}
+                </div>
+
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">➕ Add Menu Item</h2>
+                    <form action="/admin/add-item" method="POST" class="space-y-2 mb-4">
+                        <select name="category" id="cat-select" onchange="toggleCategoryFields()" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                            <option value="" disabled selected>Select Category</option>
+                            <option value="Burgers">Burgers</option>
+                            <option value="Pizza">Pizza (S/M/L)</option>
+                            <option value="Sandwich">Sandwich</option>
+                            <option value="Pasta">Pasta</option>
+                            <option value="Hot & Cold Bar">Hot & Cold Bar</option>
+                            <option value="Wraps">Wraps</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Starters">Starters (5pc/10pc)</option>
+                        </select>
+                        <input type="text" name="name" placeholder="Item Name" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                        
+                        <div id="price-normal-box"><input type="number" name="price" placeholder="Price (e.g. 450)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs"></div>
+                        <div id="price-pizza-box" style="display:none;" class="space-y-2">
+                            <input type="number" name="price_s" placeholder="Small Size Price (S)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                            <input type="number" name="price_m" placeholder="Medium Size Price (M)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                            <input type="number" name="price_l" placeholder="Large Size Price (L)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                        </div>
+                        <div id="price-starter-box" style="display:none;" class="space-y-2">
+                            <input type="number" name="price_5pc" placeholder="5 Pieces Price (5pc)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                            <input type="number" name="price_10pc" placeholder="10 Pieces Price (10pc)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                        </div>
+
+                        <input type="text" name="image" placeholder="Image URL" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-xs">Add Item</button>
+                    </form>
+
+                    <h3 class="text-sm font-semibold mb-2 text-gray-300">📋 Current Menu</h3>
+                    <div class="space-y-1.5 max-h-40 overflow-y-auto">
+                        {% for item in menu %}
+                        <div class="flex justify-between items-center bg-gray-700 p-2 rounded-lg text-xs">
+                            <div><span class="font-bold text-yellow-300">[{{ item.category }}]</span> {{ item.name }}</div>
+                            <form action="/admin/delete-item/{{ item.id }}" method="POST"><button type="submit" class="bg-red-600 text-white px-2 py-0.5 rounded text-[10px]">Delete</button></form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            function toggleCategoryFields() {
+                let cat = document.getElementById('cat-select').value;
+                document.getElementById('price-normal-box').style.display = (cat === 'Pizza' || cat === 'Starters') ? 'none' : 'block';
+                document.getElementById('price-pizza-box').style.display = (cat === 'Pizza') ? 'block' : 'none';
+                document.getElementById('price-starter-box').style.display = (cat === 'Starters') ? 'block' : 'none';
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html_code, menu=db["menu"], orders=db["orders"], total_orders=total_orders, total_revenue=total_revenue)
+
+@app.route("/admin/add-item", methods=["POST"])
+def add_item():
+    if not session.get("logged_in"): return redirect(url_for("admin_login"))
+    category = request.form.get("category", "Others")
+    db = get_db_safe()
+    new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
+    
+    newItem = {"id": new_id, "category": category, "name": request.form.get("name"), "desc": "Delicious freshly prepared meal.", "image": request.form.get("image")}
+
+    if category == 'Pizza':
+        newItem["price_s"] = float(request.form.get("price_s") or 0)
+        newItem["price_m"] = float(request.form.get("price_m") or 0)
+        newItem["price_l"] = float(request.form.get("price_l") or 0)
+        newItem["price"] = newItem["price_m"]
+    elif category == 'Starters':
+        newItem["price_5pc"] = float(request.form.get("price_5pc") or 0)
+        newItem["price_10pc"] = float(request.form.get("price_10pc") or 0)
+        newItem["price"] = newItem["price_5pc"]
+    else:
+        newItem["price"] = float(request.form.get("price") or 0)
+
+    db["menu"].append(newItem)
+    save_data(db)
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/delete-item/<int:item_id>", methods=["POST"])
+def delete_item(item_id):
+    if not session.get("logged_in"): return redirect(url_for("admin_login"))
+    db = get_db_safe()
+    db["menu"] = [m for m in db["menu"] if m["id"] != item_id]
+    save_data(db)
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("logged_in", None)
+    return redirect(url_for("admin_login"))
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
