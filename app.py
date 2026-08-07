@@ -3,13 +3,105 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_final_v5"
+app.secret_key = "sky_lounge_vip_slider_key_final_v6"
 
-# --- DEFAULT DATA BACKUP ---
+# --- COMPLETE MENU WITH DEFAULT PLACEHOLDER IMAGES ---
 DEFAULT_MENU = [
-    {"id": 1, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Crispy chicken fillet with special sauce.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
-    {"id": 2, "category": "Pizza", "name": "Chicken Supreme (M)", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "desc": "Loaded with chicken, mushrooms, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
-    {"id": 3, "category": "Starters", "name": "Hot Crispy Wings (5pc)", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy chicken wings.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"}
+    # 1. BURGERS
+    {"id": 1, "category": "Burgers", "name": "Lava Burger", "price": 1000, "desc": "Extra cheesy lava chicken burger.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
+    {"id": 2, "category": "Burgers", "name": "Swiss Mashrom", "price": 750, "desc": "Mushroom sauce and swiss cheese burger.", "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=500"},
+    {"id": 3, "category": "Burgers", "name": "Smokey Shredded", "price": 750, "desc": "Smokey shredded chicken with special dressing.", "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=500"},
+    {"id": 4, "category": "Burgers", "name": "Grill Cheese Burger", "price": 750, "desc": "Grilled chicken patty loaded with cheese.", "image": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?q=80&w=500"},
+    {"id": 5, "category": "Burgers", "name": "Pizza Burger", "price": 650, "desc": "Combination of pizza and burger taste.", "image": "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?q=80&w=500"},
+    {"id": 6, "category": "Burgers", "name": "Double Filly Burger", "price": 750, "desc": "Double chicken fillet with signature sauce.", "image": "https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?q=80&w=500"},
+    {"id": 7, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Crispy chicken fillet with mayo and lettuce.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
+    {"id": 8, "category": "Burgers", "name": "Patty Cheese Burger", "price": 350, "desc": "Classic chicken patty with cheese slice.", "image": "https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=500"},
+    {"id": 9, "category": "Burgers", "name": "Chapli Cheese Burger", "price": 350, "desc": "Desi style chapli kebab burger with cheese.", "image": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?q=80&w=500"},
+
+    # 2. STARTERS
+    {"id": 10, "category": "Starters", "name": "Crispy Chicken Strips", "price_5pc": 750, "price_10pc": 1200, "price": 750, "desc": "Golden fried crunchy chicken strips.", "image": "https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=500"},
+    {"id": 11, "category": "Starters", "name": "Sweet & Chilli Wings", "price_5pc": 600, "price_10pc": 1200, "price": 600, "desc": "Wings coated in sweet and spicy chili glaze.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"},
+    {"id": 12, "category": "Starters", "name": "Hot Crispy Wings", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy fried chicken wings.", "image": "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?q=80&w=500"},
+    {"id": 13, "category": "Starters", "name": "Chicken Nuggets", "price_5pc": 400, "price_10pc": 710, "price": 400, "desc": "Classic tender chicken nuggets.", "image": "https://images.unsplash.com/photo-1562967960-f4f6b2f764a2?q=80&w=500"},
+    {"id": 14, "category": "Starters", "name": "Chicken Malai Boti Wings", "price_5pc": 450, "price_10pc": 890, "price": 450, "desc": "Wings flavored with creamy malai boti spices.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"},
+    {"id": 15, "category": "Starters", "name": "Grill Bake Wings", "price_5pc": 400, "price_10pc": 780, "price": 400, "desc": "Oven baked grilled wings.", "image": "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?q=80&w=500"},
+    {"id": 16, "category": "Starters", "name": "Garlic Mayo Fries", "price": 400, "desc": "Crispy fries topped with garlic mayo sauce.", "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=500"},
+    {"id": 17, "category": "Starters", "name": "Loaded Fries", "price": 850, "desc": "Fries loaded with cheese, chicken chunks, and sauces.", "image": "https://images.unsplash.com/photo-1585109649139-366815a0d713?q=80&w=500"},
+
+    # 3. SANDWICH
+    {"id": 18, "category": "Sandwich", "name": "Special Malai Boti Sandwich", "price": 900, "desc": "Special creamy malai boti filled sandwich.", "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=500"},
+    {"id": 19, "category": "Sandwich", "name": "Crunchy Sandwich", "price": 850, "desc": "Crispy chicken sandwich with veggies and sauces.", "image": "https://images.unsplash.com/photo-1550507992-eb63ffee0847?q=80&w=500"},
+    {"id": 20, "category": "Sandwich", "name": "Fajita Sandwich", "price": 750, "desc": "Fajita flavored chicken chunks sandwich.", "image": "https://images.unsplash.com/photo-1539252554453-80ab65ce3586?q=80&w=500"},
+    {"id": 21, "category": "Sandwich", "name": "Filly Cheese Steak", "price": 750, "desc": "Philly style steak sandwich with melted cheese.", "image": "https://images.unsplash.com/photo-1509722747041-616f39b57569?q=80&w=500"},
+    {"id": 22, "category": "Sandwich", "name": "Grill Club", "price": 550, "desc": "Classic triple-decker grilled club sandwich.", "image": "https://images.unsplash.com/photo-1567234932491-c4fc16ef344c?q=80&w=500"},
+    {"id": 23, "category": "Sandwich", "name": "Spread Chicken Cold Sandwich", "price": 550, "desc": "Cold spread chicken sandwich.", "image": "https://images.unsplash.com/photo-1554471062-e42a969f6bb1?q=80&w=500"},
+
+    # 4. PASTA
+    {"id": 24, "category": "Pasta", "name": "Fetuccin Alfredo", "price": 900, "desc": "Creamy fettuccine pasta with mushrooms and chicken.", "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=500"},
+    {"id": 25, "category": "Pasta", "name": "Mexican Pasta", "price": 850, "desc": "Spicy Mexican style pasta.", "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281298?q=80&w=500"},
+    {"id": 26, "category": "Pasta", "name": "Mac & Cheese", "price": 750, "desc": "Classic macaroni baked in rich cheddar cheese.", "image": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=500"},
+    {"id": 27, "category": "Pasta", "name": "White Sauce Oven Baked", "price": 750, "desc": "Oven baked white sauce cheesy pasta.", "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=500"},
+
+    # 5. PIZZA
+    {"id": 28, "category": "Pizza", "name": "Donut Pizza", "price_s": 0, "price_m": 1550, "price_l": 2200, "price": 1550, "desc": "Unique donut-shaped crust specialty pizza.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
+    {"id": 29, "category": "Pizza", "name": "Chef Recommended", "price_s": 0, "price_m": 1550, "price_l": 2200, "price": 1550, "desc": "Chef special topping combination.", "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"},
+    {"id": 30, "category": "Pizza", "name": "Huawei Bazuka", "price_s": 0, "price_m": 1350, "price_l": 1950, "price": 1350, "desc": "Heavy loaded special bazuka pizza.", "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"},
+    {"id": 31, "category": "Pizza", "name": "Lazania Pizza", "price_s": 0, "price_m": 1350, "price_l": 1950, "price": 1350, "desc": "Lasagna layers fusion pizza.", "image": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=500"},
+    {"id": 32, "category": "Pizza", "name": "Calzone Bite", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "desc": "Folded calzone pizza stuffed with cheese and chicken.", "image": "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?q=80&w=500"},
+    {"id": 33, "category": "Pizza", "name": "Chicken Supreme", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "desc": "Loaded with chicken, mushrooms, capsicum, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
+    {"id": 34, "category": "Pizza", "name": "Kababish", "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, "desc": "Kababs topped special pizza.", "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=500"},
+    {"id": 35, "category": "Pizza", "name": "Royal Crust", "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, "desc": "Royal crust stuffed with cheese.", "image": "https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?q=80&w=500"},
+    {"id": 36, "category": "Pizza", "name": "Kabab Stuffer", "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, "desc": "Stuffed crust with kabab flavors.", "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"},
+    {"id": 37, "category": "Pizza", "name": "Chicken Cheese", "price_s": 750, "price_m": 1150, "price_l": 1700, "price": 1150, "desc": "Simple and delicious chicken cheese pizza.", "image": "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?q=80&w=500"},
+    {"id": 38, "category": "Pizza", "name": "Smokey BBQ", "price_s": 750, "price_m": 1150, "price_l": 1700, "price": 1150, "desc": "BBQ flavored chicken chunks with smokey sauce.", "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"},
+    {"id": 39, "category": "Pizza", "name": "Malai Boti", "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, "desc": "Creamy malai boti chunks pizza.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
+    {"id": 40, "category": "Pizza", "name": "Chicken Tikka", "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, "desc": "Traditional spicy chicken tikka chunks.", "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"},
+    {"id": 41, "category": "Pizza", "name": "Chicken Fajita", "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, "desc": "Fajita chicken with onions and capsicum.", "image": "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?q=80&w=500"},
+    {"id": 42, "category": "Pizza", "name": "Behari Kabab", "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, "desc": "Behari kebab spiced pizza.", "image": "https://images.unsplash.com/photo-1590947132387-155cc02f3212?q=80&w=500"},
+
+    # 6. WRAPS
+    {"id": 43, "category": "Wraps", "name": "Chicken Shawarma", "price": 350, "desc": "Classic chicken garlic shawarma wrap.", "image": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=500"},
+    {"id": 44, "category": "Wraps", "name": "Zinger Shawarma", "price": 500, "desc": "Crispy zinger strip wrapped in pita bread.", "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=500"},
+    {"id": 45, "category": "Wraps", "name": "Malai Boti Shawarma", "price": 450, "desc": "Creamy malai boti shawarma wrap.", "image": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=500"},
+    {"id": 46, "category": "Wraps", "name": "Platter Shawarma", "price": 750, "desc": "Open shawarma platter with fries and dips.", "image": "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=500"},
+    {"id": 47, "category": "Wraps", "name": "Grill Chicken Wrap", "price": 600, "desc": "Grilled chicken tortilla wrap.", "image": "https://images.unsplash.com/photo-1561651823-34feb02f80e9?q=80&w=500"},
+    {"id": 48, "category": "Wraps", "name": "Daynamight Wrap", "price": 590, "desc": "Dynamite sauce chicken wrap.", "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=500"},
+    {"id": 49, "category": "Wraps", "name": "Chicken Paratha", "price": 350, "desc": "Crispy paratha roll with spiced chicken.", "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=500"},
+    {"id": 50, "category": "Wraps", "name": "Malai Paratha", "price": 450, "desc": "Creamy malai paratha roll.", "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=500"},
+
+    # 7. CHINESE (Served With Rice)
+    {"id": 51, "category": "Chinese", "name": "Manchurian", "price": 1050, "desc": "Chicken manchurian served with egg fried rice.", "image": "https://images.unsplash.com/photo-1525755662778-989d0524087e?q=80&w=500"},
+    {"id": 52, "category": "Chinese", "name": "Chicken Chilli Dry", "price": 1100, "desc": "Spicy chicken chilli dry with rice.", "image": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500"},
+    {"id": 53, "category": "Chinese", "name": "Chicken Cashew Nut", "price": 1250, "desc": "Chicken with cashew nuts and vegetables with rice.", "image": "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=500"},
+    {"id": 54, "category": "Chinese", "name": "Chow Mein", "price": 1050, "desc": "Stir-fried noodles with chicken and vegetables.", "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?q=80&w=500"},
+    {"id": 55, "category": "Chinese", "name": "Pepper Chicken Strips", "price": 1100, "desc": "Pepper flavored chicken strips with rice.", "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=500"},
+    {"id": 56, "category": "Chinese", "name": "Egg Fried Rice", "price": 350, "desc": "Classic chinese egg fried rice.", "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=500"},
+
+    # 8. HOT & COLD BAR
+    {"id": 57, "category": "Hot & Cold Bar", "name": "Mint Margita", "price": 300, "desc": "Refreshing mint margarita slush.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
+    {"id": 58, "category": "Hot & Cold Bar", "name": "Fresh Lime", "price": 150, "desc": "Fresh lemon lime drink.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
+    {"id": 59, "category": "Hot & Cold Bar", "name": "Lemonade Slush", "price": 250, "desc": "Cold lemonade slush.", "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500"},
+    {"id": 60, "category": "Hot & Cold Bar", "name": "Pina Colada", "price": 400, "desc": "Coconut and pineapple refreshing mocktail.", "image": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?q=80&w=500"},
+    {"id": 61, "category": "Hot & Cold Bar", "name": "Oreo Shake", "price": 400, "desc": "Thick oreo cookies milkshake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
+    {"id": 62, "category": "Hot & Cold Bar", "name": "Mango Shake", "price": 400, "desc": "Fresh seasonal mango milkshake.", "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=500"},
+    {"id": 63, "category": "Hot & Cold Bar", "name": "Browine Shake", "price": 450, "desc": "Chocolate brownie blended thick shake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
+    {"id": 64, "category": "Hot & Cold Bar", "name": "Blueberry Mojito", "price": 370, "desc": "Refreshing blueberry mojito.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
+    {"id": 65, "category": "Hot & Cold Bar", "name": "Strawberry Majito", "price": 370, "desc": "Refreshing strawberry mojito.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
+    {"id": 66, "category": "Hot & Cold Bar", "name": "Blueberry Shake", "price": 400, "desc": "Creamy blueberry milkshake.", "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=500"},
+    {"id": 67, "category": "Hot & Cold Bar", "name": "Strawberry Shake", "price": 400, "desc": "Creamy strawberry milkshake.", "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=500"},
+    {"id": 68, "category": "Hot & Cold Bar", "name": "Hazulnut Shake", "price": 400, "desc": "Hazelnut flavored thick shake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
+    {"id": 69, "category": "Hot & Cold Bar", "name": "Peach Iced Tea", "price": 370, "desc": "Chilled peach flavored iced tea.", "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500"},
+    {"id": 70, "category": "Hot & Cold Bar", "name": "Blue Lagoon", "price": 370, "desc": "Blue curacao refreshing mocktail.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
+    {"id": 71, "category": "Hot & Cold Bar", "name": "Vanilla Shake", "price": 400, "desc": "Classic vanilla milkshake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
+    {"id": 72, "category": "Hot & Cold Bar", "name": "Cold Coffe", "price": 400, "desc": "Chilled blended coffee.", "image": "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=500"},
+    {"id": 73, "category": "Hot & Cold Bar", "name": "Karak Chai", "price": 150, "desc": "Traditional strong karak tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
+    {"id": 74, "category": "Hot & Cold Bar", "name": "Cappuccino", "price": 350, "desc": "Italian style hot cappuccino coffee.", "image": "https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=500"},
+    {"id": 75, "category": "Hot & Cold Bar", "name": "Cardamom Tea", "price": 180, "desc": "Green cardamom flavored hot tea (Elaichi Chai).", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
+    {"id": 76, "category": "Hot & Cold Bar", "name": "Cinnamon Tea", "price": 180, "desc": "Cinnamon flavored hot tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
+    {"id": 77, "category": "Hot & Cold Bar", "name": "Ginger Tea", "price": 180, "desc": "Fresh ginger flavored hot tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
+    {"id": 78, "category": "Hot & Cold Bar", "name": "Green Tea", "price": 150, "desc": "Healthy green tea (Kahwa).", "image": "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?q=80&w=500"},
+    {"id": 79, "category": "Hot & Cold Bar", "name": "Gur Wali Chai", "price": 180, "desc": "Traditional jaggery tea (Gur ki Chai).", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
+    {"id": 80, "category": "Hot & Cold Bar", "name": "Doodh Pati", "price": 180, "desc": "Traditional creamy doodh pati chai.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"}
 ]
 
 def get_db_safe():
@@ -37,16 +129,11 @@ def customer_portal():
             categories[cat] = []
         categories[cat].append(item)
 
-    # 100% Working Slider Images (Replaced 4th and 6th with solid links)
     slider_images = [
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920",
         "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920",
         "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1920",
-        "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1920",
-        "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920",
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1920",
-        "https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=1920",
-        "https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?q=80&w=1920"
+        "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1920"
     ]
 
     html_code = """
@@ -113,7 +200,7 @@ def customer_portal():
                     <div class="slider-container">
                         <div class="slider-wrapper" id="slider-wrapper">
                             {% for img in slider_images %}
-                            <div class="slide"><img src="{{ img }}" alt="Sky Lounge Gallery {{ loop.index }}"></div>
+                            <div class="slide"><img src="{{ img }}" alt="Sky Lounge Gallery"></div>
                             {% endfor %}
                         </div>
                         <div class="slider-nav">
@@ -149,9 +236,9 @@ def customer_portal():
                                 <p class="text-gray-400 text-xs mt-1 line-clamp-2">{{ item.get('desc', 'Freshly prepared meal') }}</p>
                                 <p class="text-red-500 font-black text-xl mt-3">
                                     {% if item.category == 'Pizza' %}
-                                        From Rs. {{ item.get('price_s', 0) }}
+                                        From Rs. {{ item.get('price_m', item.get('price', 0)) }}
                                     {% elif item.category == 'Starters' %}
-                                        Rs. {{ item.get('price_5pc', 0) }}
+                                        Rs. {{ item.get('price_5pc', item.get('price', 0)) }}
                                     {% else %}
                                         Rs. {{ item.get('price', 0) }}
                                     {% endif %}
@@ -180,7 +267,6 @@ def customer_portal():
                 let dropdown = document.getElementById('options-dropdown');
                 dropdown.classList.toggle('hidden');
             }
-
             window.addEventListener('click', function(e) {
                 if (!e.target.closest('button') && !e.target.closest('#options-dropdown')) {
                     document.getElementById('options-dropdown').classList.add('hidden');
@@ -199,16 +285,8 @@ def customer_portal():
                 dots.forEach(dot => dot.classList.remove('active'));
                 if (dots[slideIndex]) dots[slideIndex].classList.add('active');
             }
-
-            function currentSlide(n) {
-                slideIndex = n;
-                showSlides();
-            }
-
-            function nextSlide() {
-                slideIndex = (slideIndex + 1) % totalSlides;
-                showSlides();
-            }
+            function currentSlide(n) { slideIndex = n; showSlides(); }
+            function nextSlide() { slideIndex = (slideIndex + 1) % totalSlides; showSlides(); }
 
             let slideInterval = setInterval(nextSlide, 4000);
             const container = document.querySelector('.slider-container');
@@ -244,22 +322,15 @@ def owner_detail():
     <body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
         <div class="bg-gray-900 border border-yellow-500/40 p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center relative">
             <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow text-xs">✕</a>
-            
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-400 text-3xl mb-4 shadow-inner">
-                👑
-            </div>
-            
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-400 text-3xl mb-4 shadow-inner">👑</div>
             <h1 class="text-xl font-black text-yellow-400 uppercase tracking-wide">Haji Abdul Ghaffar</h1>
             <p class="text-red-400 text-xs font-bold mt-1 tracking-wider uppercase">& Haji Ali Raza (Saudia)</p>
             <p class="text-gray-400 text-[10px] font-semibold mt-0.5">Management / Owners</p>
-            
             <div class="bg-gray-800 p-4 rounded-2xl text-left space-y-2.5 my-5 text-xs border border-gray-700">
                 <p class="text-gray-300"><strong>Café:</strong> Sky Lounge Cafe</p>
                 <p class="text-gray-300"><strong>Location:</strong> Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
                 <p class="text-gray-300"><strong>Contact:</strong> <a href="tel:03214315914" class="text-yellow-400 underline">0321 4315914</a></p>
-                <p class="text-gray-300"><strong>Special Message:</strong> <span class="italic text-gray-400">"Serving the finest taste and best ambience in Kasur with absolute customer satisfaction."</span></p>
             </div>
-
             <a href="/" class="block w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition shadow text-xs tracking-wider">← Back to Menu</a>
         </div>
     </body>
@@ -272,12 +343,10 @@ def owner_detail():
 def feedback_page():
     db = get_db_safe()
     success = False
-    
     if request.method == "POST":
         name = request.form.get("name")
         rating = request.form.get("rating")
         comments = request.form.get("comments")
-        
         db["feedbacks"].append({"name": name, "rating": rating, "comments": comments})
         save_data(db)
         success = True
@@ -293,16 +362,13 @@ def feedback_page():
     <body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
         <div class="bg-gray-900 border border-yellow-500/40 p-6 rounded-3xl shadow-2xl max-w-md w-full relative">
             <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow text-xs">✕</a>
-            
             <h1 class="text-2xl font-black text-yellow-400 mb-1 text-center">⭐ CUSTOMER FEEDBACK</h1>
             <p class="text-gray-400 text-xs text-center mb-5">We would love to hear about your experience!</p>
-            
             {% if success %}
             <div class="bg-green-600/20 border border-green-500 p-4 rounded-2xl text-center mb-4">
                 <p class="text-green-400 font-bold text-sm">Thank you for your valuable feedback!</p>
             </div>
             {% endif %}
-
             <form method="POST" class="space-y-3 text-xs">
                 <div>
                     <label class="block text-yellow-300 font-semibold mb-1">Your Name</label>
@@ -324,10 +390,7 @@ def feedback_page():
                 </div>
                 <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl shadow transition tracking-wider text-sm">SUBMIT FEEDBACK</button>
             </form>
-
-            <div class="text-center mt-4">
-                <a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a>
-            </div>
+            <div class="text-center mt-4"><a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a></div>
         </div>
     </body>
     </html>
@@ -340,7 +403,6 @@ def item_detail():
     db = get_db_safe()
     try: item_id = int(request.args.get("id"))
     except: return redirect("/")
-        
     selected_item = next((item for item in db["menu"] if item["id"] == item_id), None)
     if not selected_item: return redirect("/")
         
@@ -355,19 +417,18 @@ def item_detail():
     <body class="bg-black/85 text-white min-h-screen flex items-center justify-center p-4">
         <div class="bg-gray-900 border border-yellow-500/30 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative">
             <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow z-10">✕</a>
-            
             <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-56 object-cover">
-            
             <div class="p-6">
                 <h2 class="text-2xl font-black text-yellow-400 mb-1">{{ item.name }}</h2>
                 <p class="text-gray-300 text-xs mb-4 leading-relaxed">{{ item.get('desc', 'Delicious item') }}</p>
-                
                 <div class="space-y-4 mb-6">
                     {% if item.category == 'Pizza' %}
                     <div>
                         <label class="block text-xs text-yellow-300 mb-1 font-bold">SELECT SIZE</label>
                         <select id="pizza-size" onchange="updatePizzaPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white font-bold text-sm">
+                            {% if item.get('price_s', 0) > 0 %}
                             <option value="Small (S)" data-price="{{ item.get('price_s', 0) }}">Small (S) - Rs. {{ item.get('price_s', 0) }}</option>
+                            {% endif %}
                             <option value="Medium (M)" data-price="{{ item.get('price_m', item.get('price', 0)) }}" selected>Medium (M) - Rs. {{ item.get('price_m', item.get('price', 0)) }}</option>
                             <option value="Large (L)" data-price="{{ item.get('price_l', 0) }}">Large (L) - Rs. {{ item.get('price_l', 0) }}</option>
                         </select>
@@ -378,11 +439,11 @@ def item_detail():
                     <div>
                         <label class="block text-xs text-yellow-300 mb-1 font-bold">SELECT PORTION</label>
                         <select id="starter-pc" onchange="updateStarterPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white font-bold text-sm">
-                            <option value="5 Pieces" data-price="{{ item.get('price_5pc', 0) }}">5 Pieces - Rs. {{ item.get('price_5pc', 0) }}</option>
+                            <option value="5 Pieces" data-price="{{ item.get('price_5pc', item.get('price', 0)) }}">5 Pieces - Rs. {{ item.get('price_5pc', item.get('price', 0)) }}</option>
                             <option value="10 Pieces" data-price="{{ item.get('price_10pc', 0) }}">10 Pieces - Rs. {{ item.get('price_10pc', 0) }}</option>
                         </select>
                     </div>
-                    <p class="text-red-500 font-black text-2xl" id="display-price">Rs. {{ item.get('price_5pc', 0) }}</p>
+                    <p class="text-red-500 font-black text-2xl" id="display-price">Rs. {{ item.get('price_5pc', item.get('price', 0)) }}</p>
 
                     {% else %}
                     <p class="text-red-500 font-black text-2xl">Rs. {{ item.get('price', 0) }}</p>
@@ -397,13 +458,9 @@ def item_detail():
                         </div>
                     </div>
                 </div>
-                
-                <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3.5 rounded-xl shadow transition text-sm tracking-wider">
-                    ADD TO BUCKET
-                </button>
+                <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3.5 rounded-xl shadow transition text-sm tracking-wider">ADD TO BUCKET</button>
             </div>
         </div>
-
         <script>
             function updatePizzaPrice() {
                 let select = document.getElementById('pizza-size');
@@ -441,14 +498,12 @@ def item_detail():
 
                 let itemQty = parseInt(document.getElementById('qty').value);
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
-                
                 let existingItem = cart.find(i => i.name === baseName && i.variant === variant);
                 if (existingItem) {
                     existingItem.qty = parseInt(existingItem.qty) + itemQty;
                 } else {
                     cart.push({ name: baseName, variant: variant, price: itemPrice, qty: itemQty });
                 }
-
                 localStorage.setItem('sky_cart', JSON.stringify(cart));
                 window.location.href = "/";
             }
@@ -472,9 +527,7 @@ def view_cart():
     <body class="bg-gray-950 text-white min-h-screen p-4 font-sans flex items-center justify-center">
         <div class="max-w-lg w-full bg-gray-900 border border-gray-800 p-6 rounded-3xl shadow-2xl">
             <h2 class="text-2xl font-black text-yellow-400 mb-4 text-center">🛒 YOUR FOOD BUCKET</h2>
-            
             <div id="cart-container"></div>
-
             <div id="checkout-form-section" style="display:none;" class="mt-4 border-t border-gray-800 pt-4">
                 <form onsubmit="submitOrder(event)" class="space-y-3">
                     <div>
@@ -489,16 +542,11 @@ def view_cart():
                         <label class="block text-xs text-yellow-300 mb-1 font-semibold">Delivery Address</label>
                         <textarea id="c_address" placeholder="House #, Street, Area..." required rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm"></textarea>
                     </div>
-                    
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-3.5 rounded-xl shadow transition text-sm">PLACE FINAL ORDER</button>
                 </form>
             </div>
-            
-            <div class="text-center mt-4">
-                <a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a>
-            </div>
+            <div class="text-center mt-4"><a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a></div>
         </div>
-
         <script>
             function loadCart() {
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
@@ -510,7 +558,6 @@ def view_cart():
                     checkoutSection.style.display = 'none';
                     return;
                 }
-
                 checkoutSection.style.display = 'block';
                 let html = '<div class="space-y-3 mb-4 max-h-48 overflow-y-auto">';
                 let totalAmount = 0;
@@ -576,7 +623,6 @@ def view_cart():
                     }
                 });
             }
-
             loadCart();
         </script>
     </body>
@@ -590,8 +636,12 @@ def save_order():
     data = request.json
     db = get_db_safe()
     import time
+    from datetime import datetime
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    
     db["orders"].append({
         "id": int(time.time() * 1000),
+        "date": current_date,
         "item": data["items"],
         "price": data["price"],
         "name": data["name"],
@@ -602,7 +652,7 @@ def save_order():
     save_data(db)
     return {"success": True}
 
-# --- 7. CLEAR / COMPLETE ORDER ROUTE ---
+# --- 7. CLEAR ORDER ROUTE ---
 @app.route("/admin/clear-order/<int:order_id>", methods=["POST"])
 def clear_order(order_id):
     if not session.get("logged_in"): return redirect(url_for("admin_login"))
@@ -613,7 +663,7 @@ def clear_order(order_id):
     save_data(db)
     return redirect(url_for("admin_dashboard"))
 
-# --- 8. ORDER SUCCESS & WHATSAPP MESSAGE ---
+# --- 8. ORDER SUCCESS ---
 @app.route("/order-success")
 def order_success():
     import urllib.parse
@@ -622,7 +672,6 @@ def order_success():
     total_amount = request.args.get("total")
     c_address = request.args.get("address")
     c_phone = request.args.get("phone")
-    
     try: cart_items = json.loads(request.args.get("items", "[]"))
     except: cart_items = []
 
@@ -638,7 +687,6 @@ def order_success():
         var_text = f" ({item['variant']})" if item.get('variant') else ""
         wa_message += f"▪ {item['qty']}x {item['name']}{var_text} - Rs.{sub}\n"
     wa_message += f"\n💰 *Total Amount:* Rs. {total_amount}\n\n_Please confirm and dispatch order quickly!_"
-    
     encoded_wa_msg = urllib.parse.quote(wa_message)
     
     success_html = f"""
@@ -654,7 +702,6 @@ def order_success():
             <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-400/10 border border-yellow-400 rounded-full text-yellow-400 text-2xl mb-3">👑</div>
             <h1 class="text-2xl font-black text-yellow-400 mb-1">ORDER CONFIRMED!</h1>
             <p class="text-red-400 text-xs font-semibold mb-4">Sky Lounge Cafe • Kasur</p>
-            
             <div class="bg-gray-800 p-4 rounded-2xl text-left space-y-2 mb-5 text-xs">
                 <p class="text-gray-300"><strong>Customer:</strong> {c_name}</p>
                 <p class="text-gray-300"><strong>Phone:</strong> {c_phone}</p>
@@ -668,7 +715,6 @@ def order_success():
                     <span class="text-green-400">Rs. {total_amount}</span>
                 </div>
             </div>
-
             <a href="https://wa.me/923093478600?text={encoded_wa_msg}" target="_blank" class="block w-full bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-xl transition mb-2.5 shadow text-sm">💬 Send Order via WhatsApp</a>
             <a href="/" class="block w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2.5 rounded-xl transition text-xs">← Back to Menu</a>
         </div>
@@ -746,7 +792,7 @@ def admin_dashboard():
             </div>
 
             <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-yellow-300">⭐ Customer Feedbacks (Customer Kya Keh Rahe Hain)</h2>
+                <h2 class="text-lg font-semibold mb-3 text-yellow-300">⭐ Customer Feedbacks</h2>
                 {% if feedbacks %}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
                     {% for fb in feedbacks %}
@@ -756,20 +802,18 @@ def admin_dashboard():
                     </div>
                     {% endfor %}
                 </div>
-                {% else %}
-                <p class="text-gray-400 text-xs">No feedback received yet.</p>
-                {% endif %}
+                {% else %}<p class="text-gray-400 text-xs">No feedback received yet.</p>{% endif %}
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">📦 Live Orders (Pending)</h2>
+                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">📦 Live Orders (Pending Date-wise)</h2>
                     {% if live_orders %}
                         <div class="space-y-3 max-h-[400px] overflow-y-auto">
                             {% for order in live_orders %}
                             <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 text-xs">
                                 <div class="flex justify-between items-center mb-1">
-                                    <h4 class="font-bold text-yellow-400">Items:</h4>
+                                    <span class="bg-yellow-900/60 text-yellow-300 px-2 py-0.5 rounded text-[10px] font-bold">📅 {{ order.get('date', 'Today') }}</span>
                                     <div class="flex items-center gap-2">
                                         <span class="bg-green-500 text-gray-900 px-2 py-0.5 rounded font-bold">Rs. {{ order.price }}</span>
                                         <form action="/admin/clear-order/{{ order.get('id') }}" method="POST">
@@ -777,7 +821,7 @@ def admin_dashboard():
                                         </form>
                                     </div>
                                 </div>
-                                <p class="text-gray-200 bg-gray-800 p-2 rounded mb-2">{{ order.item }}</p>
+                                <p class="text-gray-200 bg-gray-800 p-2 rounded mb-2 mt-1">{{ order.item }}</p>
                                 <div class="text-gray-300 space-y-0.5 border-t border-gray-600 pt-1">
                                     <p><strong>Name:</strong> {{ order.name }}</p>
                                     <p><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-blue-400 underline">{{ order.phone }}</a></p>
@@ -790,11 +834,11 @@ def admin_dashboard():
 
                     {% if cleared_orders %}
                     <div class="mt-6 pt-4 border-t border-gray-700">
-                        <h3 class="text-sm font-semibold mb-2 text-gray-400">📁 Cleared / Completed Orders History</h3>
+                        <h3 class="text-sm font-semibold mb-2 text-gray-400">📁 Completed Orders History</h3>
                         <div class="space-y-2 max-h-40 overflow-y-auto">
                             {% for order in cleared_orders %}
                             <div class="bg-gray-900/60 p-2 rounded-lg border border-gray-800 text-[11px] text-gray-400 flex justify-between items-center">
-                                <div><strong class="text-gray-300">{{ order.name }}</strong> — {{ order.item }} (Rs. {{ order.price }})</div>
+                                <div><strong class="text-gray-300">{{ order.name }}</strong> [{{ order.get('date', '') }}] — {{ order.item }} (Rs. {{ order.price }})</div>
                                 <span class="bg-gray-800 text-green-400 px-2 py-0.5 rounded font-bold text-[9px]">Completed</span>
                             </div>
                             {% endfor %}
@@ -831,13 +875,13 @@ def admin_dashboard():
                         </div>
 
                         <div>
-                            <label class="block text-[10px] text-gray-400 mb-1">Select Item Image File:</label>
-                            <input type="file" name="image_file" accept="image/*" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-500">
+                            <label class="block text-[10px] text-gray-400 mb-1">📸 Upload Item Image (Optional):</label>
+                            <input type="file" name="image_file" accept="image/*" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-500">
                         </div>
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-xs">Add Item</button>
                     </form>
 
-                    <h3 class="text-sm font-semibold mb-2 text-gray-300">📋 Current Menu</h3>
+                    <h3 class="text-sm font-semibold mb-2 text-gray-300">📋 Current Menu Management</h3>
                     <div class="space-y-1.5 max-h-40 overflow-y-auto">
                         {% for item in menu %}
                         <div class="flex justify-between items-center bg-gray-700 p-2 rounded-lg text-xs">
@@ -860,14 +904,16 @@ def admin_dashboard():
     </body>
     </html>
     """
-    return render_template_string(html_code, menu=db.get("menu", []), live_orders=live_orders, cleared_orders=cleared_orders, feedbacks=feedbacks, total_orders=total_orders, total_revenue=total_revenue)
+    return 
+render_template_string(html_code, menu=db.get("menu", []), live_orders=live_orders, cleared_orders=cleared_orders, feedbacks=feedbacks, total_orders=total_orders, total_revenue=total_revenue)
 
 @app.route("/admin/add-item", methods=["POST"])
 def add_item():
     if not session.get("logged_in"): return redirect(url_for("admin_login"))
     category = request.form.get("category", "Others")
     
-    img_url = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"
+    # Default placeholder image if image file is not uploaded
+    img_url = "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=500"
     file = request.files.get("image_file")
     if file and file.filename != '':
         import base64
