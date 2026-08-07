@@ -4,7 +4,7 @@ import base64
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_v7"
+app.secret_key = "sky_lounge_vip_slider_key_v8"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
@@ -13,10 +13,11 @@ DEFAULT_MENU = [
     {"id": 3, "category": "Starters", "name": "Hot Crispy Wings (5pc)", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy chicken wings.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"}
 ]
 
+# Reliable High Quality Food Slide Links
 DEFAULT_SLIDERS = [
-    {"id": 1, "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1920"},
-    {"id": 2, "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920"},
-    {"id": 3, "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1920"}
+    {"id": 1, "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920"}, # Cafe Vibe
+    {"id": 2, "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920"}, # Pizza Slide
+    {"id": 3, "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1920"}  # Burger Slide
 ]
 
 def get_db_safe():
