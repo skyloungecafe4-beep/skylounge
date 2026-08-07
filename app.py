@@ -3,9 +3,9 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_livechat_key"
+app.secret_key = "sky_lounge_final_pro_key"
 
-# --- 1. CUSTOMER PORTAL (With Live Chat & VIP UI) ---
+# --- 1. CUSTOMER PORTAL ---
 @app.route("/")
 def customer_portal():
     db = load_data()
@@ -142,9 +142,9 @@ def item_detail():
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Size</label>
                         <select id="pizza-size" onchange="updatePizzaPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
-                            <option value="S" data-price="{{ item.price_s }}">Small (S) - Rs. {{ item.price_s }}</option>
-                            <option value="M" data-price="{{ item.price_m }}" selected>Medium (M) - Rs. {{ item.price_m }}</option>
-                            <option value="L" data-price="{{ item.price_l }}">Large (L) - Rs. {{ item.price_l }}</option>
+                            <option value="Small (S)" data-price="{{ item.price_s }}">Small (S) - Rs. {{ item.price_s }}</option>
+                            <option value="Medium (M)" data-price="{{ item.price_m }}" selected>Medium (M) - Rs. {{ item.price_m }}</option>
+                            <option value="Large (L)" data-price="{{ item.price_l }}">Large (L) - Rs. {{ item.price_l }}</option>
                         </select>
                     </div>
                     <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_m }}</p>
@@ -153,8 +153,8 @@ def item_detail():
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Portion / Pieces</label>
                         <select id="starter-pc" onchange="updateStarterPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
-                            <option value="5pc" data-price="{{ item.price_5pc }}">5 Pieces - Rs. {{ item.price_5pc }}</option>
-                            <option value="10pc" data-price="{{ item.price_10pc }}">10 Pieces - Rs. {{ item.price_10pc }}</option>
+                            <option value="5 Pieces" data-price="{{ item.price_5pc }}">5 Pieces - Rs. {{ item.price_5pc }}</option>
+                            <option value="10 Pieces" data-price="{{ item.price_10pc }}">10 Pieces - Rs. {{ item.price_10pc }}</option>
                         </select>
                     </div>
                     <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_5pc }}</p>
@@ -203,29 +203,27 @@ def item_detail():
             function addToCart() {
                 let baseName = "{{ item.name }}";
                 let itemCategory = "{{ item.category }}";
-                let finalName = baseName;
+                let variant = "";
                 let itemPrice = parseFloat("{{ item.price if item.category not in ['Pizza', 'Starters'] else item.price_m }}");
 
                 if (itemCategory === 'Pizza') {
                     let select = document.getElementById('pizza-size');
-                    let sizeText = select.options[select.selectedIndex].text.split(' - ')[0];
-                    finalName = baseName + " (" + sizeText + ")";
+                    variant = select.value;
                     itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
                 } else if (itemCategory === 'Starters') {
                     let select = document.getElementById('starter-pc');
-                    let pcText = select.options[select.selectedIndex].text.split(' - ')[0];
-                    finalName = baseName + " (" + pcText + ")";
+                    variant = select.value;
                     itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
                 }
 
                 let itemQty = parseInt(document.getElementById('qty').value);
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
                 
-                let existingItem = cart.find(i => i.name === finalName);
+                let existingItem = cart.find(i => i.name === baseName && i.variant === variant);
                 if (existingItem) {
                     existingItem.qty = parseInt(existingItem.qty) + itemQty;
                 } else {
-                    cart.push({ name: finalName, price: itemPrice, qty: itemQty });
+                    cart.push({ name: baseName, variant: variant, price: itemPrice, qty: itemQty });
                 }
 
                 localStorage.setItem('sky_cart', JSON.stringify(cart));
@@ -300,11 +298,12 @@ def view_cart():
                     let price = parseFloat(item.price || 0);
                     let subtotal = price * qty;
                     totalAmount += subtotal;
+                    let displayTitle = item.name + (item.variant ? ` (${item.variant})` : '');
                     
                     html += `
                         <div class="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700">
                             <div>
-                                <h4 class="font-bold text-white">${item.name}</h4>
+                                <h4 class="font-bold text-white">${displayTitle}</h4>
                                 <p class="text-xs text-gray-400">Rs. ${price} x ${qty}</p>
                             </div>
                             <div class="flex items-center gap-4">
@@ -339,7 +338,10 @@ def view_cart():
                 let address = document.getElementById('c_address').value;
 
                 let totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty)), 0);
-                let itemsDesc = cart.map(i => `${i.qty}x ${i.name}`).join(', ');
+                
+                // One by one items list format for database and display
+                let itemsDescArray = cart.map(i => `${i.qty}x ${i.name}` + (i.variant ? ` (${i.variant})` : '') + ` - Rs.${i.price * i.qty}`);
+                let itemsDesc = itemsDescArray.join(', ');
 
                 fetch('/save-order', {
                     method: 'POST',
@@ -350,7 +352,7 @@ def view_cart():
                 .then(data => {
                     if(data.success) {
                         localStorage.removeItem('sky_cart');
-                        window.location.href = `/order-success?name=${encodeURIComponent(name)}&items=${encodeURIComponent(itemsDesc)}&total=${totalAmount}&phone=${phone}&address=${encodeURIComponent(address)}`;
+                        window.location.href = `/order-success?name=${encodeURIComponent(name)}&items=${encodeURIComponent(JSON.stringify(cart))}&total=${totalAmount}&phone=${phone}&address=${encodeURIComponent(address)}`;
                     }
                 });
             }
@@ -377,14 +379,38 @@ def save_order():
     save_data(db)
     return {"success": True}
 
-# --- 5. VIP ORDER SUCCESS & WHATSAPP MODAL ---
+# --- 5. VIP ORDER SUCCESS & PROFESSIONAL WHATSAPP MESSAGE ---
 @app.route("/order-success")
 def order_success():
+    import json
     c_name = request.args.get("name")
-    items_desc = request.args.get("items")
     total_amount = request.args.get("total")
     c_address = request.args.get("address")
     c_phone = request.args.get("phone")
+    
+    try:
+        cart_items = json.loads(request.args.get("items", "[]"))
+    except:
+        cart_items = []
+
+    # UI Display list (one by one)
+    ui_items_html = ""
+    for item in cart_items:
+        sub = float(item['price']) * int(item['qty'])
+        var_text = f" ({item['variant']})" if item.get('variant') else ""
+        ui_items_html += f"<p class='text-gray-200 border-b border-gray-700/50 pb-1'>• <strong>{item['qty']}x</strong> {item['name']}{var_text} — <span class='text-yellow-400'>Rs. {sub}</span></p>"
+
+    # Professional WhatsApp formatted message (one by one items with rates)
+    wa_message = f"🍔 *NEW ORDER - SKY LOUNGE* 🍔\n📍 *Saima Mor, Kasur*\n\n👤 *Customer Name:* {c_name}\n📞 *Phone:* {c_phone}\n🏠 *Address:* {c_address}\n\n🛒 *Ordered Items:*\n"
+    for item in cart_items:
+        sub = float(item['price']) * int(item['qty'])
+        var_text = f" ({item['variant']})" if item.get('variant') else ""
+        wa_message += f"▪ {item['qty']}x {item['name']}{var_text} - Rs.{sub}\n"
+    
+    wa_message += f"\n💰 *Total Amount:* Rs. {total_amount}\n\n_Please confirm and dispatch order quickly!_"
+    
+    import urllib.parse
+    encoded_wa_msg = urllib.parse.quote(wa_message)
     
     success_html = f"""
     <!DOCTYPE html>
@@ -410,11 +436,11 @@ def order_success():
                 <p class="text-gray-300"><strong>Customer:</strong> {c_name}</p>
                 <p class="text-gray-300"><strong>Phone:</strong> {c_phone}</p>
                 <p class="text-gray-300"><strong>Delivery Address:</strong> {c_address}</p>
-                <div class="border-t border-gray-700 pt-2 mt-2">
-                    <p class="text-yellow-300 font-bold">Ordered Items:</p>
-                    <p class="text-gray-200">{items_desc}</p>
+                <div class="border-t border-gray-700 pt-2 mt-2 space-y-1.5">
+                    <p class="text-yellow-300 font-bold mb-1">Ordered Items (One by One):</p>
+                    {ui_items_html}
                 </div>
-                <div class="border-t border-gray-700 pt-2 flex justify-between items-center text-base font-black">
+                <div class="border-t border-gray-700 pt-2 flex justify-between items-center text-base font-black mt-3">
                     <span class="text-white">Total Amount:</span>
                     <span class="text-green-400 text-lg">Rs. {total_amount}</span>
                 </div>
@@ -422,7 +448,7 @@ def order_success():
 
             <p class="text-gray-400 text-xs mb-4">Aapka order receive ho gaya hai! Mazeed foran rabta karne ke liye WhatsApp button dabayein.</p>
             
-            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge,%20My%20name%20is%20{c_name}.%20I%20ordered:%20{items_desc}.%20Total:%20Rs.{total_amount}.%20Address:%20{c_address}" 
+            <a href="https://wa.me/923093478600?text={encoded_wa_msg}" 
                target="_blank" 
                class="block w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-4 rounded-xl transition mb-3 shadow-lg flex items-center justify-center gap-2 text-base">
                 <span>💬 Send Order via WhatsApp (VIP)</span>
@@ -517,9 +543,10 @@ def admin_dashboard():
                             {% for order in orders %}
                             <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
                                 <div class="flex justify-between items-center mb-2">
-                                    <h4 class="font-bold text-md text-yellow-400">Items: {{ order.item }}</h4>
+                                    <h4 class="font-bold text-md text-yellow-400">Order Items:</h4>
                                     <span class="bg-green-500 text-gray-900 text-xs px-2.5 py-1 rounded-full font-bold">Rs. {{ order.price }}</span>
                                 </div>
+                                <p class="text-sm text-gray-200 bg-gray-800 p-2.5 rounded mb-3">{{ order.item }}</p>
                                 <div class="text-sm text-gray-300 space-y-1 border-t border-gray-600 pt-2">
                                     <p><strong>Name:</strong> {{ order.name }}</p>
                                     <p><strong>Phone:</strong> <a href="tel:{{ order.phone }}" class="text-blue-400 underline">{{ order.phone }}</a></p>
@@ -577,7 +604,7 @@ def admin_dashboard():
                                 <span class="truncate max-w-[150px]">{{ item.name }}</span>
                             </div>
                             <form action="/admin/delete-item/{{ item.id }}" method="POST">
-                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</label>
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</button>
                             </form>
                         </div>
                         {% endfor %}
