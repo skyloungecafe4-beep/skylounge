@@ -3,12 +3,21 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_final_cart_fix_key"
+app.secret_key = "sky_lounge_category_fix_key"
 
-# --- 1. CUSTOMER PORTAL ---
+# --- 1. CUSTOMER PORTAL (Categorized Menu) ---
 @app.route("/")
 def customer_portal():
     db = load_data()
+    
+    # Group items by category
+    categories = {}
+    for item in db["menu"]:
+        cat = item.get("category", "Others")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(item)
+
     html_code = """
     <!DOCTYPE html>
     <html lang="en">
@@ -31,29 +40,32 @@ def customer_portal():
             </a>
         </div>
 
-        <main class="max-w-6xl mx-auto p-6">
-            <div class="mb-8">
-                <h2 class="text-3xl font-extrabold text-white">BEST SELLERS</h2>
-                <p class="text-gray-400 text-sm mt-1">Click 'Order Now' to customize and add items to your bucket!</p>
-            </div>
+        <main class="max-w-6xl mx-auto p-6 space-y-12">
+            {% for cat_name, items in categories.items() %}
+            <section>
+                <div class="border-b border-red-800 pb-2 mb-6">
+                    <h2 class="text-3xl font-black tracking-wider text-yellow-400 uppercase">{{ cat_name }}</h2>
+                </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {% for item in menu %}
-                <div class="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 shadow-xl flex flex-col justify-between hover:border-red-600 transition">
-                    <div>
-                        <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-40 object-cover">
-                        <div class="p-4">
-                            <h3 class="text-lg font-bold text-white">{{ item.name }}</h3>
-                            <p class="text-red-500 font-extrabold text-lg mt-1">Rs. {{ item.price }}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    {% for item in items %}
+                    <div class="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 shadow-xl flex flex-col justify-between hover:border-red-600 transition">
+                        <div>
+                            <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-40 object-cover">
+                            <div class="p-4">
+                                <h3 class="text-lg font-bold text-white">{{ item.name }}</h3>
+                                <p class="text-red-500 font-extrabold text-lg mt-1">Rs. {{ item.price }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 pt-0">
+                            <a href="/item-detail?id={{ item.id }}" class="block text-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">Order Now</a>
                         </div>
                     </div>
-                    
-                    <div class="p-4 pt-0">
-                        <a href="/item-detail?id={{ item.id }}" class="block text-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg shadow transition text-sm">Order Now</a>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
+            </section>
+            {% endfor %}
         </main>
 
         <script>
@@ -77,7 +89,7 @@ def customer_portal():
     </body>
     </html>
     """
-    return render_template_string(html_code, menu=db["menu"])
+    return render_template_string(html_code, categories=categories)
 
 # --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
@@ -364,7 +376,7 @@ def order_success():
     """
     return render_template_string(success_html)
 
-# --- 6. ADMIN PANEL ---
+# --- 6. ADMIN PANEL (With Category Selection) ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
     error = None
@@ -465,9 +477,20 @@ def admin_dashboard():
                 <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                     <h2 class="text-xl font-semibold mb-4 text-yellow-300">➕ Add New Menu Item</h2>
                     <form action="/admin/add-item" method="POST" class="space-y-3 mb-6">
-                        <input type="text" name="name" placeholder="Item Name (e.g. Burger)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
-                        <input type="number" name="price" placeholder="Price (e.g. 500)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
-                        <input type="text" name="image" placeholder="Image URL (paste link of item pic)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        <select name="category" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                            <option value="" disabled selected>Select Category</option>
+                            <option value="Burgers">Burgers</option>
+                            <option value="Pizza">Pizza</option>
+                            <option value="Sandwich">Sandwich</option>
+                            <option value="Pasta">Pasta</option>
+                            <option value="Hot & Cold Bar">Hot & Cold Bar</option>
+                            <option value="Wraps">Wraps</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Starters">Starters</option>
+                        </select>
+                        <input type="text" name="name" placeholder="Item Name (e.g. Zinger Burger)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        <input type="number" name="price" placeholder="Price (e.g. 450)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        <input type="text" name="image" placeholder="Image URL" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition text-sm">Add Item to Menu</button>
                     </form>
 
@@ -475,7 +498,10 @@ def admin_dashboard():
                     <div class="space-y-2 max-h-56 overflow-y-auto">
                         {% for item in menu %}
                         <div class="flex justify-between items-center bg-gray-700 p-3 rounded-lg text-sm">
-                            <span class="truncate max-w-[200px]">{{ item.name }}</span>
+                            <div>
+                                <span class="font-bold text-yellow-300">[{{ item.category }}]</span> 
+                                <span class="truncate max-w-[150px]">{{ item.name }}</span>
+                            </div>
                             <form action="/admin/delete-item/{{ item.id }}" method="POST">
                                 <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</button>
                             </form>
@@ -494,6 +520,8 @@ def admin_dashboard():
 def add_item():
     if not session.get("logged_in"):
         return redirect(url_for("admin_login"))
+        
+    category = request.form.get("category", "Others")
     name = request.form.get("name")
     try:
         price = float(request.form.get("price"))
@@ -505,7 +533,8 @@ def add_item():
     new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
     
     db["menu"].append({
-        "id": new_id, 
+        "id": new_id,
+        "category": category,
         "name": name, 
         "desc": "Delicious freshly prepared meal.", 
         "price": price, 
