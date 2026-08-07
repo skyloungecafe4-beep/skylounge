@@ -4,7 +4,7 @@ import base64
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_v4"
+app.secret_key = "sky_lounge_vip_slider_key_v5"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
@@ -22,10 +22,8 @@ def get_db_safe():
     db = load_data()
     if not db.get("menu"):
         db["menu"] = DEFAULT_MENU
-    if not db.get("sliders"):
+    if not db.get("sliders") or len(db.get("sliders")) == 0:
         db["sliders"] = DEFAULT_SLIDERS
-    if not db.get("orders"):
-        db["orders"] = []
     save_data(db)
     return db
 
@@ -52,9 +50,9 @@ def customer_portal():
         <title>Sky Lounge Cafe - Kasur</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            .slider-container { position: relative; overflow: hidden; width: 100%; height: 280px; }
+            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; }
             @media(min-width: 768px) { .slider-container { height: 400px; } }
-            .slider-wrapper { display: flex; transition: transform 0.6s ease-in-out; height: 100%; }
+            .slider-wrapper { display: flex; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; width: 100%; }
             .slide { min-width: 100%; height: 100%; flex-shrink: 0; }
             .slide img { width: 100%; height: 100%; object-fit: cover; }
             .slider-nav { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
@@ -76,12 +74,12 @@ def customer_portal():
         <div class="max-w-7xl mx-auto px-4 pt-6 pb-2">
             <div class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl overflow-hidden border border-yellow-500/20 shadow-2xl">
                 
-                <div class="py-6 px-4 text-center bg-gray-900/80 backdrop-blur border-b border-gray-800">
+                <div class="py-5 px-4 text-center bg-gray-900/90 backdrop-blur border-b border-gray-800">
                     <h1 class="text-3xl md:text-5xl font-black tracking-widest text-yellow-400 uppercase drop-shadow">SKY LOUNGE CAFE</h1>
                     <p class="text-gray-300 text-xs md:text-sm mt-1.5 font-semibold">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
                 </div>
 
-                <div class="slider-container relative bg-black">
+                <div class="slider-container bg-black" id="main-slider">
                     <div class="slider-wrapper" id="slider-wrapper">
                         {% for s in slider_list %}
                         <div class="slide"><img src="{{ s.image }}" alt="Cafe Slide"></div>
@@ -149,17 +147,22 @@ def customer_portal():
 
         <script>
             let slideIndex = 0;
-            const slides = document.getElementById('slider-wrapper');
+            const slidesWrapper = document.getElementById('slider-wrapper');
+            const totalSlides = slidesWrapper ? slidesWrapper.children.length : 0;
             const dots = document.querySelectorAll('.nav-dot');
 
             function showSlides() {
-                if(!slides || slides.children.length === 0) return;
-                if(slideIndex >= slides.children.length) slideIndex = 0;
-                if(slideIndex < 0) slideIndex = slides.children.length - 1;
+                if(!slidesWrapper || totalSlides === 0) return;
+                if(slideIndex >= totalSlides) slideIndex = 0;
+                if(slideIndex < 0) slideIndex = totalSlides - 1;
                 
-                slides.style.transform = `translateX(-${slideIndex * 100}%)`;
-                dots.forEach(dot => dot.classList.remove('active'));
-                if(dots[slideIndex]) dots[slideIndex].classList.add('active');
+                slidesWrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
+                dots.forEach((dot, idx) => {
+                    if(dot) {
+                        if(idx === slideIndex) dot.classList.add('active');
+                        else dot.classList.remove('active');
+                    }
+                });
             }
 
             function currentSlide(n) {
@@ -167,12 +170,12 @@ def customer_portal():
                 showSlides();
             }
 
-            setInterval(() => {
-                if(slides && slides.children.length > 0) {
-                    slideIndex = (slideIndex + 1) % slides.children.length;
+            if(totalSlides > 1) {
+                setInterval(() => {
+                    slideIndex = (slideIndex + 1) % totalSlides;
                     showSlides();
-                }
-            }, 3500);
+                }, 4000);
+            }
 
             function updateCartCount() {
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
