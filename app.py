@@ -3,14 +3,13 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_category_fix_key"
+app.secret_key = "sky_lounge_final_update_key"
 
-# --- 1. CUSTOMER PORTAL (Categorized Menu) ---
+# --- 1. CUSTOMER PORTAL ---
 @app.route("/")
 def customer_portal():
     db = load_data()
     
-    # Group items by category
     categories = {}
     for item in db["menu"]:
         cat = item.get("category", "Others")
@@ -28,9 +27,10 @@ def customer_portal():
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-gray-950 text-white min-h-screen font-sans">
-        <header class="bg-gradient-to-r from-red-900 via-red-700 to-black shadow-2xl py-8 px-6 text-center border-b border-red-800">
-            <h1 class="text-5xl md:text-7xl font-black tracking-widest text-yellow-400 drop-shadow-lg">SKY LOUNGE</h1>
-            <p class="text-gray-300 text-sm md:text-base mt-2 font-medium">Taste the Luxury • Order Fresh & Hot</p>
+        <header class="bg-gradient-to-r from-red-900 via-red-700 to-black shadow-2xl py-6 px-6 text-center border-b border-red-800">
+            <h1 class="text-4xl md:text-6xl font-black tracking-widest text-yellow-400 drop-shadow-lg">SKY LOUNGE</h1>
+            <p class="text-yellow-200 text-xs md:text-sm mt-1 font-semibold tracking-wider">📍 Saima Mor, Opp PSO Petrol Pump, Kasur</p>
+            <p class="text-gray-300 text-xs md:text-sm mt-1 font-medium">Taste the Luxury • Order Fresh & Hot</p>
         </header>
 
         <div class="bg-red-600 sticky top-0 z-40 shadow-md py-3 px-6 flex justify-between items-center max-w-6xl mx-auto md:rounded-b-xl">
@@ -54,7 +54,15 @@ def customer_portal():
                             <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-40 object-cover">
                             <div class="p-4">
                                 <h3 class="text-lg font-bold text-white">{{ item.name }}</h3>
-                                <p class="text-red-500 font-extrabold text-lg mt-1">Rs. {{ item.price }}</p>
+                                <p class="text-red-500 font-extrabold text-lg mt-1">
+                                    {% if item.category == 'Pizza' %}
+                                        From Rs. {{ item.price_s }}
+                                    {% elif item.category == 'Starters' %}
+                                        Rs. {{ item.price_5pc }} (5pc)
+                                    {% else %}
+                                        Rs. {{ item.price }}
+                                    {% endif %}
+                                </p>
                             </div>
                         </div>
                         
@@ -91,7 +99,7 @@ def customer_portal():
     """
     return render_template_string(html_code, categories=categories)
 
-# --- 2. ITEM DETAIL POPUP ---
+# --- 2. ITEM DETAIL POPUP (Size & Variant Handling) ---
 @app.route("/item-detail")
 def item_detail():
     db = load_data()
@@ -120,10 +128,34 @@ def item_detail():
             
             <div class="p-6">
                 <h2 class="text-2xl font-black text-yellow-400 mb-2">{{ item.name }}</h2>
-                <p class="text-gray-300 text-sm mb-6 leading-relaxed">{{ item.desc }}</p>
-                <p class="text-red-500 font-extrabold text-2xl mb-6">Rs. {{ item.price }}</p>
+                <p class="text-gray-300 text-sm mb-4 leading-relaxed">{{ item.desc }}</p>
                 
-                <div class="space-y-4">
+                <div class="space-y-4 mb-6">
+                    {% if item.category == 'Pizza' %}
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Size</label>
+                        <select id="pizza-size" onchange="updatePizzaPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
+                            <option value="S" data-price="{{ item.price_s }}">Small (S) - Rs. {{ item.price_s }}</option>
+                            <option value="M" data-price="{{ item.price_m }}" selected>Medium (M) - Rs. {{ item.price_m }}</option>
+                            <option value="L" data-price="{{ item.price_l }}">Large (L) - Rs. {{ item.price_l }}</option>
+                        </select>
+                    </div>
+                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_m }}</p>
+
+                    {% elif item.category == 'Starters' %}
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-1 font-semibold">Select Portion / Pieces</label>
+                        <select id="starter-pc" onchange="updateStarterPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white font-bold">
+                            <option value="5pc" data-price="{{ item.price_5pc }}">5 Pieces - Rs. {{ item.price_5pc }}</option>
+                            <option value="10pc" data-price="{{ item.price_10pc }}">10 Pieces - Rs. {{ item.price_10pc }}</option>
+                        </select>
+                    </div>
+                    <p class="text-red-500 font-extrabold text-2xl" id="display-price">Rs. {{ item.price_5pc }}</p>
+
+                    {% else %}
+                    <p class="text-red-500 font-extrabold text-2xl">Rs. {{ item.price }}</p>
+                    {% endif %}
+
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Quantity</label>
                         <div class="flex items-center space-x-3">
@@ -132,15 +164,27 @@ def item_detail():
                             <button type="button" onclick="increaseQty()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-lg">+</button>
                         </div>
                     </div>
-                    
-                    <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
-                        <span>ADD TO BUCKET</span>
-                    </button>
                 </div>
+                
+                <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+                    <span>ADD TO BUCKET</span>
+                </button>
             </div>
         </div>
 
         <script>
+            function updatePizzaPrice() {
+                let select = document.getElementById('pizza-size');
+                let price = select.options[select.selectedIndex].getAttribute('data-price');
+                document.getElementById('display-price').innerText = "Rs. " + price;
+            }
+
+            function updateStarterPrice() {
+                let select = document.getElementById('starter-pc');
+                let price = select.options[select.selectedIndex].getAttribute('data-price');
+                document.getElementById('display-price').innerText = "Rs. " + price;
+            }
+
             function increaseQty() {
                 let input = document.getElementById('qty');
                 let val = parseInt(input.value);
@@ -153,8 +197,23 @@ def item_detail():
             }
 
             function addToCart() {
-                let itemName = "{{ item.name }}";
-                let itemPrice = parseFloat("{{ item.price }}");
+                let baseName = "{{ item.name }}";
+                let itemCategory = "{{ item.category }}";
+                let finalName = baseName;
+                let itemPrice = parseFloat("{{ item.price if item.category not in ['Pizza', 'Starters'] else item.price_m }}");
+
+                if (itemCategory === 'Pizza') {
+                    let select = document.getElementById('pizza-size');
+                    let sizeText = select.options[select.selectedIndex].text.split(' - ')[0];
+                    finalName = baseName + " (" + sizeText + ")";
+                    itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
+                } else if (itemCategory === 'Starters') {
+                    let select = document.getElementById('starter-pc');
+                    let pcText = select.options[select.selectedIndex].text.split(' - ')[0];
+                    finalName = baseName + " (" + pcText + ")";
+                    itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
+                }
+
                 let itemQty = parseInt(document.getElementById('qty').value);
 
                 let cart = [];
@@ -168,11 +227,11 @@ def item_detail():
                     cart = [];
                 }
                 
-                let existingItem = cart.find(i => i.name === itemName);
+                let existingItem = cart.find(i => i.name === finalName);
                 if (existingItem) {
                     existingItem.qty = parseInt(existingItem.qty) + itemQty;
                 } else {
-                    cart.push({ name: itemName, price: itemPrice, qty: itemQty });
+                    cart.push({ name: finalName, price: itemPrice, qty: itemQty });
                 }
 
                 localStorage.setItem('sky_cart', JSON.stringify(cart));
@@ -342,7 +401,7 @@ def save_order():
     save_data(db)
     return {"success": True}
 
-# --- 5. ORDER SUCCESS & WHATSAPP ---
+# --- 5. ORDER SUCCESS & WHATSAPP (Configured to 03093478600) ---
 @app.route("/order-success")
 def order_success():
     c_name = request.args.get("name")
@@ -363,7 +422,7 @@ def order_success():
             <h1 class="text-3xl font-black text-green-500 mb-2">Order Confirmed! 🎉</h1>
             <p class="text-gray-400 mb-6 text-sm">Aapka bucket order mil gaya hai! Jald deliver kar diya jaye ga.</p>
             
-            <a href="https://wa.me/923001234567?text=Hello%20Sky%20Lounge,%20My%20name%20is%20{c_name}.%20I%20ordered:%20{items_desc}.%20Total:%20Rs.{total_amount}.%20Address:%20{c_address}" 
+            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge,%20My%20name%20is%20{c_name}.%20I%20ordered:%20{items_desc}.%20Total:%20Rs.{total_amount}.%20Address:%20{c_address}" 
                target="_blank" 
                class="block w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mb-3 shadow">
                 💬 Send Order via WhatsApp
@@ -376,7 +435,7 @@ def order_success():
     """
     return render_template_string(success_html)
 
-# --- 6. ADMIN PANEL (With Category Selection) ---
+# --- 6. ADMIN PANEL ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
     error = None
@@ -476,20 +535,35 @@ def admin_dashboard():
 
                 <div class="bg-gray-800 p-6 rounded-xl border border-gray-700">
                     <h2 class="text-xl font-semibold mb-4 text-yellow-300">➕ Add New Menu Item</h2>
-                    <form action="/admin/add-item" method="POST" class="space-y-3 mb-6">
-                        <select name="category" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                    <form action="/admin/add-item" method="POST" class="space-y-3 mb-6" id="add-item-form">
+                        <select name="category" id="cat-select" onchange="toggleCategoryFields()" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
                             <option value="" disabled selected>Select Category</option>
                             <option value="Burgers">Burgers</option>
-                            <option value="Pizza">Pizza</option>
+                            <option value="Pizza">Pizza (S/M/L)</option>
                             <option value="Sandwich">Sandwich</option>
                             <option value="Pasta">Pasta</option>
                             <option value="Hot & Cold Bar">Hot & Cold Bar</option>
                             <option value="Wraps">Wraps</option>
                             <option value="Chinese">Chinese</option>
-                            <option value="Starters">Starters</option>
+                            <option value="Starters">Starters (5pc/10pc)</option>
                         </select>
-                        <input type="text" name="name" placeholder="Item Name (e.g. Zinger Burger)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
-                        <input type="number" name="price" placeholder="Price (e.g. 450)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        <input type="text" name="name" placeholder="Item Name" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        
+                        <div id="price-normal-box">
+                            <input type="number" name="price" placeholder="Price (e.g. 450)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        </div>
+
+                        <div id="price-pizza-box" style="display:none;" class="space-y-2">
+                            <input type="number" name="price_s" placeholder="Small Size Price (S)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                            <input type="number" name="price_m" placeholder="Medium Size Price (M)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                            <input type="number" name="price_l" placeholder="Large Size Price (L)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        </div>
+
+                        <div id="price-starter-box" style="display:none;" class="space-y-2">
+                            <input type="number" name="price_5pc" placeholder="5 Pieces Price (5pc)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                            <input type="number" name="price_10pc" placeholder="10 Pieces Price (10pc)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        </div>
+
                         <input type="text" name="image" placeholder="Image URL" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition text-sm">Add Item to Menu</button>
                     </form>
@@ -511,6 +585,27 @@ def admin_dashboard():
                 </div>
             </div>
         </div>
+
+        <script>
+            function toggleCategoryFields() {
+                let cat = document.getElementById('cat-select').value;
+                let normalBox = document.getElementById('price-normal-box');
+                let pizzaBox = document.getElementById('price-pizza-box');
+                let starterBox = document.getElementById('price-starter-box');
+
+                normalBox.style.display = 'none';
+                pizzaBox.style.display = 'none';
+                starterBox.style.display = 'none';
+
+                if (cat === 'Pizza') {
+                    pizzaBox.style.display = 'block';
+                } else if (cat === 'Starters') {
+                    starterBox.style.display = 'block';
+                } else {
+                    normalBox.style.display = 'block';
+                }
+            }
+        </script>
     </body>
     </html>
     """
@@ -523,23 +618,38 @@ def add_item():
         
     category = request.form.get("category", "Others")
     name = request.form.get("name")
-    try:
-        price = float(request.form.get("price"))
-    except:
-        price = 0.0
     image = request.form.get("image")
     
     db = load_data()
     new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
     
-    db["menu"].append({
+    newItem = {
         "id": new_id,
         "category": category,
         "name": name, 
         "desc": "Delicious freshly prepared meal.", 
-        "price": price, 
         "image": image
-    })
+    }
+
+    if category == 'Pizza':
+        try: newItem["price_s"] = float(request.form.get("price_s", 0))
+        except: newItem["price_s"] = 0.0
+        try: newItem["price_m"] = float(request.form.get("price_m", 0))
+        except: newItem["price_m"] = 0.0
+        try: newItem["price_l"] = float(request.form.get("price_l", 0))
+        except: newItem["price_l"] = 0.0
+        newItem["price"] = newItem["price_m"] # default fallback
+    elif category == 'Starters':
+        try: newItem["price_5pc"] = float(request.form.get("price_5pc", 0))
+        except: newItem["price_5pc"] = 0.0
+        try: newItem["price_10pc"] = float(request.form.get("price_10pc", 0))
+        except: newItem["price_10pc"] = 0.0
+        newItem["price"] = newItem["price_5pc"] # default fallback
+    else:
+        try: newItem["price"] = float(request.form.get("price", 0))
+        except: newItem["price"] = 0.0
+
+    db["menu"].append(newItem)
     save_data(db)
     return redirect(url_for("admin_dashboard"))
 
