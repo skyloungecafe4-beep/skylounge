@@ -1,50 +1,14 @@
 from flask import Flask, redirect, render_template_string, request, session, url_for
 import os
+from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_absolute_final_key"
-
-# Café ka Menu
-menu_items = [
-    {
-        "id": 1, 
-        "name": "Supreme Pizza", 
-        "desc": "Loaded with extra cheese, chicken tikka, mushrooms, and olives.",
-        "price": 1100, 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=500&q=80"
-    },
-    {
-        "id": 2, 
-        "name": "Zinger Burger", 
-        "desc": "Crispy chicken fillet with fresh lettuce and our signature mayo sauce.",
-        "price": 450, 
-        "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=500&q=80"
-    },
-    {
-        "id": 3, 
-        "name": "Mighty Zinger", 
-        "desc": "Double Zinger fillet with cheese, spicy mayo, and lettuce in a sesame bun.",
-        "price": 770, 
-        "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500&q=80"
-    },
-    {
-        "id": 4, 
-        "name": "Mint Margarita", 
-        "desc": "Refreshing chilled drink made with fresh mint and lime.",
-        "price": 300, 
-        "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=500&q=80"
-    }
-]
-
-live_orders = []
+app.secret_key = "sky_lounge_final_cart_fix_key"
 
 # --- 1. CUSTOMER PORTAL ---
 @app.route("/")
 def customer_portal():
-    if "cart" not in session:
-        session["cart"] = []
-    cart_count = sum(item["qty"] for item in session["cart"])
-    
+    db = load_data()
     html_code = """
     <!DOCTYPE html>
     <html lang="en">
@@ -62,15 +26,15 @@ def customer_portal():
 
         <div class="bg-red-600 sticky top-0 z-40 shadow-md py-3 px-6 flex justify-between items-center max-w-6xl mx-auto md:rounded-b-xl">
             <span class="font-bold text-lg flex items-center gap-2">🛒 Your Bucket</span>
-            <a href="/cart" class="bg-yellow-400 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-lg font-black text-sm transition shadow">
-                View Bucket ({{ cart_count }})
+            <a href="/cart" class="bg-yellow-400 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-lg font-black text-sm transition shadow flex items-center gap-1">
+                View Bucket (<span id="cart-count">0</span>)
             </a>
         </div>
 
         <main class="max-w-6xl mx-auto p-6">
             <div class="mb-8">
                 <h2 class="text-3xl font-extrabold text-white">BEST SELLERS</h2>
-                <p class="text-gray-400 text-sm mt-1">Click 'Order Now' to view details and add items to your bucket!</p>
+                <p class="text-gray-400 text-sm mt-1">Click 'Order Now' to customize and add items to your bucket!</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
@@ -91,20 +55,30 @@ def customer_portal():
                 {% endfor %}
             </div>
         </main>
+
+        <script>
+            function updateCartCount() {
+                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let totalQty = cart.reduce((sum, item) => sum + parseInt(item.qty), 0);
+                document.getElementById('cart-count').innerText = totalQty;
+            }
+            updateCartCount();
+        </script>
     </body>
     </html>
     """
-    return render_template_string(html_code, menu=menu_items, cart_count=cart_count)
+    return render_template_string(html_code, menu=db["menu"])
 
 # --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
 def item_detail():
+    db = load_data()
     try:
         item_id = int(request.args.get("id"))
     except:
         return redirect("/")
         
-    selected_item = next((item for item in menu_items if item["id"] == item_id), None)
+    selected_item = next((item for item in db["menu"] if item["id"] == item_id), None)
     if not selected_item:
         return redirect("/")
         
@@ -127,22 +101,20 @@ def item_detail():
                 <p class="text-gray-300 text-sm mb-6 leading-relaxed">{{ item.desc }}</p>
                 <p class="text-red-500 font-extrabold text-2xl mb-6">Rs. {{ item.price }}</p>
                 
-                <form action="/add-to-cart" method="POST" class="space-y-4">
-                    <input type="hidden" name="item_id" value="{{ item.id }}">
-                    
+                <div class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1 font-semibold">Quantity</label>
                         <div class="flex items-center space-x-3">
                             <button type="button" onclick="decreaseQty()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-lg">-</button>
-                            <input type="number" id="qty" name="qty" value="1" min="1" max="10" readonly class="w-16 text-center bg-gray-800 border border-gray-700 rounded-lg py-2 text-white font-bold">
+                            <input type="number" id="qty" value="1" min="1" max="10" readonly class="w-16 text-center bg-gray-800 border border-gray-700 rounded-lg py-2 text-white font-bold">
                             <button type="button" onclick="increaseQty()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-bold text-lg">+</button>
                         </div>
                     </div>
                     
-                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
+                    <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition flex justify-center items-center gap-2">
                         <span>ADD TO BUCKET</span>
                     </button>
-                </form>
+                </div>
             </div>
         </div>
 
@@ -157,58 +129,34 @@ def item_detail():
                 let val = parseInt(input.value);
                 if(val > 1) input.value = val - 1;
             }
+
+            function addToCart() {
+                let itemName = "{{ item.name }}";
+                let itemPrice = parseFloat("{{ item.price }}");
+                let itemQty = parseInt(document.getElementById('qty').value);
+
+                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                
+                let existingItem = cart.find(i => i.name === itemName);
+                if (existingItem) {
+                    existingItem.qty = parseInt(existingItem.qty) + itemQty;
+                } else {
+                    cart.push({ name: itemName, price: itemPrice, qty: itemQty });
+                }
+
+                localStorage.setItem('sky_cart', JSON.stringify(cart));
+                alert("Item added to your bucket successfully! 🎉");
+                window.location.href = "/";
+            }
         </script>
     </body>
     </html>
     """
     return render_template_string(html_code, item=selected_item)
 
-# --- 3. ADD TO CART LOGIC ---
-@app.route("/add-to-cart", methods=["POST"])
-def add_to_cart():
-    if "cart" not in session:
-        session["cart"] = []
-        
-    try:
-        item_id = int(request.form.get("item_id"))
-        qty = int(request.form.get("qty", 1))
-    except:
-        return redirect("/")
-        
-    selected_item = next((item for item in menu_items if item["id"] == item_id), None)
-    
-    if selected_item:
-        title = selected_item["name"]
-        price = selected_item["price"]
-        
-        # Check if item already exists in cart
-        exists = False
-        for cart_item in session["cart"]:
-            if cart_item["name"] == title:
-                cart_item["qty"] += qty
-                exists = True
-                break
-                
-        if not exists:
-            session["cart"].append({
-                "name": title,
-                "price": price,
-                "qty": qty
-            })
-            
-        session.modified = True
-
-    return redirect(url_for("customer_portal"))
-
-# --- 4. VIEW CART ---
+# --- 3. VIEW CART ---
 @app.route("/cart")
 def view_cart():
-    if "cart" not in session:
-        session["cart"] = []
-        
-    cart = session["cart"]
-    total_amount = sum(item["price"] * item["qty"] for item in cart)
-    
     html_code = """
     <!DOCTYPE html>
     <html lang="en">
@@ -221,77 +169,137 @@ def view_cart():
         <div class="max-w-xl mx-auto bg-gray-900 border border-gray-800 p-6 rounded-2xl shadow-2xl">
             <h2 class="text-3xl font-black text-yellow-400 mb-4 text-center">🛒 Your Food Bucket</h2>
             
-            {% if cart %}
-                <div class="space-y-4 mb-6">
-                    {% for item in cart %}
-                    <div class="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700">
-                        <div>
-                            <h4 class="font-bold text-white">{{ item.name }}</h4>
-                            <p class="text-xs text-gray-400">Rs. {{ item.price }} x {{ item.qty }}</p>
-                        </div>
-                        <span class="text-yellow-400 font-extrabold">Rs. {{ item.price * item.qty }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="border-t border-gray-800 pt-4 mb-6 flex justify-between text-xl font-black">
-                    <span>Total Amount:</span>
-                    <span class="text-green-400">Rs. {{ total_amount }}</span>
-                </div>
-                
-                <form action="/checkout" method="POST" class="space-y-4">
+            <div id="cart-container"></div>
+
+            <div id="checkout-form-section" style="display:none;" class="mt-6 border-t border-gray-800 pt-4">
+                <form onsubmit="submitOrder(event)" class="space-y-4">
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Your Full Name</label>
-                        <input type="text" name="customer_name" placeholder="e.g. Ali Khan" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
+                        <input type="text" id="c_name" placeholder="e.g. Ali Khan" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Phone Number</label>
-                        <input type="text" name="customer_phone" placeholder="e.g. 03001234567" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
+                        <input type="text" id="c_phone" placeholder="e.g. 03001234567" required class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white">
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-1">Delivery Address</label>
-                        <textarea name="customer_address" placeholder="House #, Street, Area..." required rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"></textarea>
+                        <textarea id="c_address" placeholder="House #, Street, Area..." required rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"></textarea>
                     </div>
                     
                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow transition">Place Final Order</button>
                 </form>
-            {% else %}
-                <p class="text-center text-gray-400 py-8">Your bucket is empty!</p>
-            {% endif %}
+            </div>
             
             <div class="text-center mt-6">
                 <a href="/" class="text-sm text-yellow-400 hover:underline">← Add More Items (Back to Menu)</a>
             </div>
         </div>
+
+        <script>
+            function loadCart() {
+                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let container = document.getElementById('cart-container');
+                let checkoutSection = document.getElementById('checkout-form-section');
+
+                if (cart.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-400 py-8">Your bucket is empty!</p>';
+                    checkoutSection.style.display = 'none';
+                    return;
+                }
+
+                checkoutSection.style.display = 'block';
+                let html = '<div class="space-y-4 mb-6">';
+                let totalAmount = 0;
+
+                cart.forEach((item, index) => {
+                    let qty = parseInt(item.qty);
+                    let price = parseFloat(item.price);
+                    let subtotal = price * qty;
+                    totalAmount += subtotal;
+                    
+                    html += `
+                        <div class="bg-gray-800 p-4 rounded-lg flex justify-between items-center border border-gray-700">
+                            <div>
+                                <h4 class="font-bold text-white">${item.name}</h4>
+                                <p class="text-xs text-gray-400">Rs. ${price} x ${qty}</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-yellow-400 font-extrabold">Rs. ${subtotal}</span>
+                                <button type="button" onclick="removeItem(${index})" class="text-red-500 hover:text-red-400 text-xs font-bold bg-gray-700 px-2 py-1 rounded">✕</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>
+                    <div class="border-t border-gray-800 pt-4 flex justify-between text-xl font-black">
+                        <span>Total Amount:</span>
+                        <span class="text-green-400">Rs. ${totalAmount}</span>
+                    </div>
+                `;
+                container.innerHTML = html;
+            }
+
+            function removeItem(index) {
+                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                cart.splice(index, 1);
+                localStorage.setItem('sky_cart', JSON.stringify(cart));
+                loadCart();
+            }
+
+            function submitOrder(e) {
+                e.preventDefault();
+                let cart = JSON.parse(localStorage.getItem('sky_cart')) || [];
+                let name = document.getElementById('c_name').value;
+                let phone = document.getElementById('c_phone').value;
+                let address = document.getElementById('c_address').value;
+
+                let totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * parseInt(item.qty)), 0);
+                let itemsDesc = cart.map(i => `${i.qty}x ${i.name}`).join(', ');
+
+                fetch('/save-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, address, items: itemsDesc, price: totalAmount })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        localStorage.removeItem('sky_cart');
+                        window.location.href = `/order-success?name=${encodeURIComponent(name)}&items=${encodeURIComponent(itemsDesc)}&total=${totalAmount}&phone=${phone}&address=${encodeURIComponent(address)}`;
+                    }
+                });
+            }
+
+            loadCart();
+        </script>
     </body>
     </html>
     """
-    return render_template_string(html_code, cart=cart, total_amount=total_amount)
+    return render_template_string(html_code)
 
-# --- 5. CHECKOUT & WHATSAPP ---
-@app.route("/checkout", methods=["POST"])
-def checkout():
-    if "cart" not in session or not session["cart"]:
-        return redirect("/")
-        
-    c_name = request.form.get("customer_name")
-    c_phone = request.form.get("customer_phone")
-    c_address = request.form.get("customer_address")
-    
-    cart_items = session["cart"]
-    total_amount = sum(item["price"] * item["qty"] for item in cart_items)
-    items_desc = ", ".join([f"{item['qty']}x {item['name']}" for item in cart_items])
-    
-    live_orders.append({
-        "item": items_desc,
-        "price": total_amount,
-        "name": c_name,
-        "phone": c_phone,
-        "address": c_address
+# --- 4. SAVE ORDER ROUTE ---
+@app.route("/save-order", methods=["POST"])
+def save_order():
+    data = request.json
+    db = load_data()
+    db["orders"].append({
+        "item": data["items"],
+        "price": data["price"],
+        "name": data["name"],
+        "phone": data["phone"],
+        "address": data["address"]
     })
-    
-    session["cart"] = []
-    session.modified = True
+    save_data(db)
+    return {"success": True}
+
+# --- 5. ORDER SUCCESS & WHATSAPP ---
+@app.route("/order-success")
+def order_success():
+    c_name = request.args.get("name")
+    items_desc = request.args.get("items")
+    total_amount = request.args.get("total")
+    c_address = request.args.get("address")
     
     success_html = f"""
     <!DOCTYPE html>
@@ -358,8 +366,9 @@ def admin_dashboard():
     if not session.get("logged_in"):
         return redirect(url_for("admin_login"))
         
-    total_revenue = sum(order["price"] for order in live_orders)
-    total_orders = len(live_orders)
+    db = load_data()
+    total_revenue = sum(order["price"] for order in db["orders"])
+    total_orders = len(db["orders"])
     
     html_code = """
     <!DOCTYPE html>
@@ -421,4 +430,68 @@ def admin_dashboard():
                     <form action="/admin/add-item" method="POST" class="space-y-3 mb-6">
                         <input type="text" name="name" placeholder="Item Name (e.g. Burger)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
                         <input type="number" name="price" placeholder="Price (e.g. 500)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
-                        <input type="text" name="image" placeholder="Image URL (paste link of item pic)" required class="w-full bg-gray-700 border
+                        <input type="text" name="image" placeholder="Image URL (paste link of item pic)" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-sm">
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition text-sm">Add Item to Menu</button>
+                    </form>
+
+                    <h3 class="text-lg font-semibold mb-3 text-gray-300">📋 Current Menu</h3>
+                    <div class="space-y-2 max-h-56 overflow-y-auto">
+                        {% for item in menu %}
+                        <div class="flex justify-between items-center bg-gray-700 p-3 rounded-lg text-sm">
+                            <span class="truncate max-w-[200px]">{{ item.name }}</span>
+                            <form action="/admin/delete-item/{{ item.id }}" method="POST">
+                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-semibold">Delete</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(html_code, menu=db["menu"], orders=db["orders"], total_orders=total_orders, total_revenue=total_revenue)
+
+@app.route("/admin/add-item", methods=["POST"])
+def add_item():
+    if not session.get("logged_in"):
+        return redirect(url_for("admin_login"))
+    name = request.form.get("name")
+    try:
+        price = float(request.form.get("price"))
+    except:
+        price = 0.0
+    image = request.form.get("image")
+    
+    db = load_data()
+    new_id = len(db["menu"]) + 1
+    
+    db["menu"].append({
+        "id": new_id, 
+        "name": name, 
+        "desc": "Delicious freshly prepared meal.", 
+        "price": price, 
+        "image": image
+    })
+    save_data(db)
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/delete-item/<int:item_id>", methods=["POST"])
+def delete_item(item_id):
+    if not session.get("logged_in"):
+        return redirect(url_for("admin_login"))
+    
+    db = load_data()
+    db["menu"] = [m for m in db["menu"] if m["id"] != item_id]
+    save_data(db)
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("logged_in", None)
+    return redirect(url_for("admin_login"))
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
