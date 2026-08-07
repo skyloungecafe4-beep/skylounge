@@ -1,10 +1,9 @@
 from flask import Flask, redirect, render_template_string, request, session, url_for
 import os
-import base64
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_v5"
+app.secret_key = "sky_lounge_vip_slider_key_v3"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
@@ -15,15 +14,18 @@ DEFAULT_MENU = [
 
 DEFAULT_SLIDERS = [
     {"id": 1, "image": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920"},
-    {"id": 2, "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920"}
+    {"id": 2, "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920"},
+    {"id": 3, "image": "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1920"}
 ]
 
 def get_db_safe():
     db = load_data()
     if not db.get("menu"):
         db["menu"] = DEFAULT_MENU
-    if not db.get("sliders") or len(db.get("sliders")) == 0:
+    if not db.get("sliders"):
         db["sliders"] = DEFAULT_SLIDERS
+    if not db.get("orders"):
+        db["orders"] = []
     save_data(db)
     return db
 
@@ -50,48 +52,43 @@ def customer_portal():
         <title>Sky Lounge Cafe - Kasur</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; }
-            @media(min-width: 768px) { .slider-container { height: 400px; } }
-            .slider-wrapper { display: flex; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; width: 100%; }
-            .slide { min-width: 100%; height: 100%; flex-shrink: 0; }
+            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; md:height: 380px; }
+            .slider-wrapper { display: flex; transition: transform 0.6s ease-in-out; height: 100%; }
+            .slide { min-width: 100%; height: 100%; }
             .slide img { width: 100%; height: 100%; object-fit: cover; }
-            .slider-nav { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
-            .nav-dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
-            .nav-dot.active { background: #e11d48; width: 25px; border-radius: 5px; }
+            .slider-nav { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
+            .nav-dot { width: 9px; height: 9px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; }
+            .nav-dot.active { background: #e11d48; width: 22px; border-radius: 4px; }
         </style>
     </head>
     <body class="bg-gray-950 text-white min-h-screen font-sans">
         
-        <div class="bg-gray-900 border-b border-gray-800 py-2.5 px-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+        <div class="bg-gray-900 border-b border-gray-800 py-2 px-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-black tracking-widest text-yellow-400 uppercase">⚡ Sky Lounge Cafe</span>
+                <span class="text-lg font-black tracking-wider text-yellow-400">SLC</span>
             </div>
             <a href="/cart" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-black text-xs transition shadow flex items-center gap-1.5">
                 🛒 BUCKET (<span id="cart-count">0</span>)
             </a>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 pt-6 pb-2">
-            <div class="bg-gradient-to-b from-gray-900 to-gray-950 rounded-3xl overflow-hidden border border-yellow-500/20 shadow-2xl">
-                
-                <div class="py-5 px-4 text-center bg-gray-900/90 backdrop-blur border-b border-gray-800">
-                    <h1 class="text-3xl md:text-5xl font-black tracking-widest text-yellow-400 uppercase drop-shadow">SKY LOUNGE CAFE</h1>
-                    <p class="text-gray-300 text-xs md:text-sm mt-1.5 font-semibold">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
-                </div>
+        <header class="bg-gradient-to-r from-red-950 via-gray-900 to-gray-950 py-10 px-6 text-center border-b-4 border-red-700">
+            <h1 class="text-4xl md:text-6xl font-black tracking-widest text-yellow-400 leading-tight drop-shadow-lg">SKY LOUNGE CAFE</h1>
+            <p class="text-gray-300 text-sm md:text-base mt-3 font-medium tracking-wide">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
+        </header>
 
-                <div class="slider-container bg-black" id="main-slider">
-                    <div class="slider-wrapper" id="slider-wrapper">
-                        {% for s in slider_list %}
-                        <div class="slide"><img src="{{ s.image }}" alt="Cafe Slide"></div>
-                        {% endfor %}
-                    </div>
-                    <div class="slider-nav" id="slider-dots">
-                        {% for s in slider_list %}
-                        <span class="nav-dot {% if loop.first %}active{% endif %}" onclick="currentSlide({{ loop.index0 }})"></span>
-                        {% endfor %}
-                    </div>
+        <div class="w-full bg-gray-900 shadow-2xl relative mb-10">
+            <div class="slider-container max-w-7xl mx-auto">
+                <div class="slider-wrapper" id="slider-wrapper">
+                    {% for s in slider_list %}
+                    <div class="slide"><img src="{{ s.image }}" alt="Cafe Slide"></div>
+                    {% endfor %}
                 </div>
-
+                <div class="slider-nav" id="slider-dots">
+                    {% for s in slider_list %}
+                    <span class="nav-dot {% if loop.first %}active{% endif %}" onclick="currentSlide({{ loop.index0 }})"></span>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -147,22 +144,14 @@ def customer_portal():
 
         <script>
             let slideIndex = 0;
-            const slidesWrapper = document.getElementById('slider-wrapper');
-            const totalSlides = slidesWrapper ? slidesWrapper.children.length : 0;
+            const slides = document.getElementById('slider-wrapper');
             const dots = document.querySelectorAll('.nav-dot');
 
             function showSlides() {
-                if(!slidesWrapper || totalSlides === 0) return;
-                if(slideIndex >= totalSlides) slideIndex = 0;
-                if(slideIndex < 0) slideIndex = totalSlides - 1;
-                
-                slidesWrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
-                dots.forEach((dot, idx) => {
-                    if(dot) {
-                        if(idx === slideIndex) dot.classList.add('active');
-                        else dot.classList.remove('active');
-                    }
-                });
+                if(!slides || slides.children.length === 0) return;
+                slides.style.transform = `translateX(-${slideIndex * 100}%)`;
+                dots.forEach(dot => dot.classList.remove('active'));
+                if(dots[slideIndex]) dots[slideIndex].classList.add('active');
             }
 
             function currentSlide(n) {
@@ -170,12 +159,12 @@ def customer_portal():
                 showSlides();
             }
 
-            if(totalSlides > 1) {
-                setInterval(() => {
-                    slideIndex = (slideIndex + 1) % totalSlides;
+            setInterval(() => {
+                if(slides && slides.children.length > 0) {
+                    slideIndex = (slideIndex + 1) % slides.children.length;
                     showSlides();
-                }, 4000);
-            }
+                }
+            }, 4000);
 
             function updateCartCount() {
                 let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
@@ -581,10 +570,10 @@ def admin_dashboard():
             </div>
 
             <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-yellow-300">🖼️ Upload Slider Images (Direct from Device)</h2>
-                <form action="/admin/add-slider" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-2 mb-4">
-                    <input type="file" name="image_file" accept="image/*" required class="flex-1 bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-yellow-500 file:text-gray-950 hover:file:bg-yellow-400">
-                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-bold px-4 py-2 rounded-lg text-xs">Upload Slide</button>
+                <h2 class="text-lg font-semibold mb-3 text-yellow-300">🖼️ Manage Top Slider Images</h2>
+                <form action="/admin/add-slider" method="POST" class="flex gap-2 mb-4">
+                    <input type="text" name="image" placeholder="Paste Image URL here for Slider..." required class="flex-1 bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
+                    <button type="submit" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 font-bold px-4 py-2 rounded-lg text-xs">Add Slide</button>
                 </form>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
                     {% for slide in sliders %}
@@ -619,8 +608,8 @@ def admin_dashboard():
                 </div>
 
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">➕ Add Menu Item (Direct Image Upload)</h2>
-                    <form action="/admin/add-item" method="POST" enctype="multipart/form-data" class="space-y-2 mb-4">
+                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">➕ Add Menu Item</h2>
+                    <form action="/admin/add-item" method="POST" class="space-y-2 mb-4">
                         <select name="category" id="cat-select" onchange="toggleCategoryFields()" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
                             <option value="" disabled selected>Select Category</option>
                             <option value="Burgers">Burgers</option>
@@ -645,10 +634,7 @@ def admin_dashboard():
                             <input type="number" name="price_10pc" placeholder="10 Pieces Price (10pc)" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
                         </div>
 
-                        <div>
-                            <label class="block text-[10px] text-gray-400 mb-1">Select Item Image File:</label>
-                            <input type="file" name="image_file" accept="image/*" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-500">
-                        </div>
+                        <input type="text" name="image" placeholder="Image URL" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white text-xs">
                         <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-xs">Add Item</button>
                     </form>
 
@@ -680,20 +666,12 @@ def admin_dashboard():
 @app.route("/admin/add-slider", methods=["POST"])
 def add_slider():
     if not session.get("logged_in"): return redirect(url_for("admin_login"))
-    
-    file = request.files.get("image_file")
-    if file and file.filename != '':
-        img_bytes = file.read()
-        encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-        img_url = f"data:image/jpeg;base64,{encoded_img}"
-        
-        db = get_db_safe()
-        sliders = db.get("sliders", [])
-        new_id = (max([s["id"] for s in sliders]) + 1) if sliders else 1
-        sliders.append({"id": new_id, "image": img_url})
-        db["sliders"] = sliders
-        save_data(db)
-        
+    db = get_db_safe()
+    sliders = db.get("sliders", [])
+    new_id = (max([s["id"] for s in sliders]) + 1) if sliders else 1
+    sliders.append({"id": new_id, "image": request.form.get("image")})
+    db["sliders"] = sliders
+    save_data(db)
     return redirect(url_for("admin_dashboard"))
 
 @app.route("/admin/delete-slider/<int:slide_id>", methods=["POST"])
@@ -708,18 +686,10 @@ def delete_slider(slide_id):
 def add_item():
     if not session.get("logged_in"): return redirect(url_for("admin_login"))
     category = request.form.get("category", "Others")
-    
-    img_url = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"
-    file = request.files.get("image_file")
-    if file and file.filename != '':
-        img_bytes = file.read()
-        encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-        img_url = f"data:image/jpeg;base64,{encoded_img}"
-
     db = get_db_safe()
     new_id = (max([m["id"] for m in db["menu"]]) + 1) if db["menu"] else 1
     
-    newItem = {"id": new_id, "category": category, "name": request.form.get("name"), "desc": "Delicious freshly prepared meal.", "image": img_url}
+    newItem = {"id": new_id, "category": category, "name": request.form.get("name"), "desc": "Delicious freshly prepared meal.", "image": request.form.get("image")}
 
     if category == 'Pizza':
         newItem["price_s"] = float(request.form.get("price_s") or 0)
