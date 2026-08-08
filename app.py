@@ -3,7 +3,7 @@ import os
 from database import load_data, save_data
 
 app = Flask(__name__)
-app.secret_key = "sky_lounge_vip_slider_key_final_v3"
+app.secret_key = "sky_lounge_vip_slider_key_final"
 
 # --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
@@ -16,12 +16,6 @@ def get_db_safe():
     db = load_data()
     if not db.get("menu"):
         db["menu"] = DEFAULT_MENU
-        save_data(db)
-    if "feedbacks" not in db:
-        db["feedbacks"] = []
-        save_data(db)
-    if "orders" not in db:
-        db["orders"] = []
         save_data(db)
     return db
 
@@ -37,6 +31,7 @@ def customer_portal():
             categories[cat] = []
         categories[cat].append(item)
 
+    # --- 8 IMAGES KA SLIDER ---
     slider_images = [
         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1920",
         "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920",
@@ -67,38 +62,16 @@ def customer_portal():
             .nav-dot.active { background: #e11d48; width: 30px; border-radius: 6px; }
         </style>
     </head>
-    <body class="bg-gray-950 text-white min-h-screen font-sans relative">
+    <body class="bg-gray-950 text-white min-h-screen font-sans">
         
         <div class="bg-gray-900 border-b border-gray-800 py-3 px-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
             <div class="flex items-center gap-2">
                 <span class="text-xl">👑</span>
                 <span class="font-black tracking-wider text-yellow-400 text-lg">SKY LOUNGE</span>
             </div>
-            
-            <div class="flex items-center gap-3">
-                <a href="/cart" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-black text-xs transition shadow flex items-center gap-1.5">
-                    🛒 BUCKET (<span id="cart-count">0</span>)
-                </a>
-                
-                <div class="relative">
-                    <button onclick="toggleOptionsMenu()" class="bg-gray-800 hover:bg-gray-700 text-white w-9 h-9 rounded-full flex items-center justify-center font-bold text-lg border border-gray-700 transition shadow">
-                        ⋮
-                    </button>
-                    
-                    <div id="options-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl py-2 z-50">
-                        <a href="/feedback" class="block px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-red-600 hover:text-white transition flex items-center gap-2">
-                            ⭐ Give Feedback
-                        </a>
-                        <a href="/owner-detail" class="block px-4 py-2.5 text-xs font-semibold text-gray-200 hover:bg-red-600 hover:text-white transition flex items-center gap-2">
-                            👑 Owner Details
-                        </a>
-                        <div class="border-t border-gray-800 my-1"></div>
-                        <a href="/admin" class="block px-4 py-2.5 text-xs font-bold text-yellow-400 hover:bg-yellow-500 hover:text-gray-950 transition flex items-center gap-2">
-                            🔒 Admin Login
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <a href="/cart" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-black text-xs transition shadow flex items-center gap-1.5">
+                🛒 BUCKET (<span id="cart-count">0</span>)
+            </a>
         </div>
 
         <header class="bg-gray-950 pt-6 pb-2 px-4">
@@ -126,6 +99,7 @@ def customer_portal():
         </header>
 
         <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-10 mb-20 mt-2">
+            
             <nav class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                 {% for cat_name in categories.keys() %}
                 <a href="#cat-{{ cat_name }}" class="bg-gray-900 hover:bg-red-600 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border border-gray-800 transition shadow">{{ cat_name }}</a>
@@ -175,17 +149,6 @@ def customer_portal():
         </div>
 
         <script>
-            function toggleOptionsMenu() {
-                let dropdown = document.getElementById('options-dropdown');
-                dropdown.classList.toggle('hidden');
-            }
-
-            window.addEventListener('click', function(e) {
-                if (!e.target.closest('button') && !e.target.closest('#options-dropdown')) {
-                    document.getElementById('options-dropdown').classList.add('hidden');
-                }
-            });
-
             let slideIndex = 0;
             const wrapper = document.getElementById('slider-wrapper');
             const slides = document.querySelectorAll('.slide');
@@ -210,6 +173,7 @@ def customer_portal():
             }
 
             let slideInterval = setInterval(nextSlide, 4000);
+
             const container = document.querySelector('.slider-container');
             if(container) {
                 container.addEventListener('mouseenter', () => clearInterval(slideInterval));
@@ -229,110 +193,7 @@ def customer_portal():
     """
     return render_template_string(html_code, categories=categories, slider_images=slider_images)
 
-# --- 2. OWNER DETAIL ROUTE ---
-@app.route("/owner-detail")
-def owner_detail():
-    html_code = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Owner Details - Sky Lounge Cafe</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-yellow-500/40 p-6 rounded-3xl shadow-2xl max-w-sm w-full text-center relative">
-            <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow text-xs">✕</a>
-            
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-yellow-400/10 border-2 border-yellow-400 rounded-full text-yellow-400 text-3xl mb-4 shadow-inner">
-                👑
-            </div>
-            
-            <h1 class="text-2xl font-black text-yellow-400 uppercase tracking-wide">Asad Ali</h1>
-            <p class="text-red-400 text-xs font-bold mt-1 tracking-widest uppercase">Founder & Managing Director</p>
-            
-            <div class="bg-gray-800 p-4 rounded-2xl text-left space-y-2.5 my-5 text-xs border border-gray-700">
-                <p class="text-gray-300"><strong>Café:</strong> Sky Lounge Cafe</p>
-                <p class="text-gray-300"><strong>Location:</strong> Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
-                <p class="text-gray-300"><strong>Contact:</strong> <a href="tel:923093478600" class="text-yellow-400 underline">+92 309 3478600</a></p>
-                <p class="text-gray-300"><strong>Special Message:</strong> <span class="italic text-gray-400">"Serving the finest taste and best ambience in Kasur with absolute customer satisfaction."</span></p>
-            </div>
-
-            <a href="/" class="block w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl transition shadow text-xs tracking-wider">← Back to Menu</a>
-        </div>
-    </body>
-    </html>
-    """
-    return render_template_string(html_code)
-
-# --- 3. FEEDBACK ROUTE ---
-@app.route("/feedback", methods=["GET", "POST"])
-def feedback_page():
-    db = get_db_safe()
-    success = False
-    
-    if request.method == "POST":
-        name = request.form.get("name")
-        rating = request.form.get("rating")
-        comments = request.form.get("comments")
-        
-        db["feedbacks"].append({"name": name, "rating": rating, "comments": comments})
-        save_data(db)
-        success = True
-
-    html_code = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Customer Feedback - Sky Lounge Cafe</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-yellow-500/40 p-6 rounded-3xl shadow-2xl max-w-md w-full relative">
-            <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow text-xs">✕</a>
-            
-            <h1 class="text-2xl font-black text-yellow-400 mb-1 text-center">⭐ CUSTOMER FEEDBACK</h1>
-            <p class="text-gray-400 text-xs text-center mb-5">We would love to hear about your experience!</p>
-            
-            {% if success %}
-            <div class="bg-green-600/20 border border-green-500 p-4 rounded-2xl text-center mb-4">
-                <p class="text-green-400 font-bold text-sm">Thank you for your valuable feedback!</p>
-            </div>
-            {% endif %}
-
-            <form method="POST" class="space-y-3 text-xs">
-                <div>
-                    <label class="block text-yellow-300 font-semibold mb-1">Your Name</label>
-                    <input type="text" name="name" placeholder="e.g. Ali Ahmed" required class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm">
-                </div>
-                <div>
-                    <label class="block text-yellow-300 font-semibold mb-1">Rating</label>
-                    <select name="rating" required class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white font-bold text-sm">
-                        <option value="⭐⭐⭐⭐⭐ (5/5 - Excellent)">⭐⭐⭐⭐⭐ (5/5 - Excellent)</option>
-                        <option value="⭐⭐⭐⭐ (4/5 - Good)">⭐⭐⭐⭐ (4/5 - Good)</option>
-                        <option value="⭐⭐⭐ (3/5 - Average)">⭐⭐⭐ (3/5 - Average)</option>
-                        <option value="⭐⭐ (2/5 - Poor)">⭐⭐ (2/5 - Poor)</option>
-                        <option value="⭐ (1/5 - Very Bad)">⭐ (1/5 - Very Bad)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-yellow-300 font-semibold mb-1">Your Comments / Suggestions</label>
-                    <textarea name="comments" rows="3" placeholder="Tell us what you liked..." required class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm"></textarea>
-                </div>
-                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl shadow transition tracking-wider text-sm">SUBMIT FEEDBACK</button>
-            </form>
-
-            <div class="text-center mt-4">
-                <a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return render_template_string(html_code, success=success)
-
-# --- 4. ITEM DETAIL POPUP ---
+# --- 2. ITEM DETAIL POPUP ---
 @app.route("/item-detail")
 def item_detail():
     db = get_db_safe()
@@ -456,7 +317,7 @@ def item_detail():
     """
     return render_template_string(html_code, item=selected_item)
 
-# --- 5. VIEW CART ---
+# --- 3. VIEW CART ---
 @app.route("/cart")
 def view_cart():
     html_code = """
@@ -582,36 +443,22 @@ def view_cart():
     """
     return render_template_string(html_code)
 
-# --- 6. SAVE ORDER ROUTE ---
+# --- 4. SAVE ORDER ROUTE ---
 @app.route("/save-order", methods=["POST"])
 def save_order():
     data = request.json
     db = get_db_safe()
-    import time
     db["orders"].append({
-        "id": int(time.time() * 1000),
         "item": data["items"],
         "price": data["price"],
         "name": data["name"],
         "phone": data["phone"],
-        "address": data["address"],
-        "status": "pending"
+        "address": data["address"]
     })
     save_data(db)
     return {"success": True}
 
-# --- 7. CLEAR / COMPLETE ORDER ROUTE ---
-@app.route("/admin/clear-order/<int:order_id>", methods=["POST"])
-def clear_order(order_id):
-    if not session.get("logged_in"): return redirect(url_for("admin_login"))
-    db = get_db_safe()
-    for order in db.get("orders", []):
-        if order.get("id") == order_id:
-            order["status"] = "cleared"
-    save_data(db)
-    return redirect(url_for("admin_dashboard"))
-
-# --- 8. ORDER SUCCESS & WHATSAPP MESSAGE ---
+# --- 5. ORDER SUCCESS & WHATSAPP MESSAGE ---
 @app.route("/order-success")
 def order_success():
     import urllib.parse
@@ -675,7 +522,7 @@ def order_success():
     """
     return render_template_string(success_html)
 
-# --- 9. ADMIN PANEL ---
+# --- 6. ADMIN PANEL ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_login():
     error = None
@@ -712,15 +559,8 @@ def admin_login():
 def admin_dashboard():
     if not session.get("logged_in"): return redirect(url_for("admin_login"))
     db = get_db_safe()
-    
-    orders = db.get("orders", [])
-    # Separate pending and cleared orders
-    live_orders = [o for o in orders if o.get("status", "pending") == "pending"]
-    cleared_orders = [o for o in orders if o.get("status") == "cleared"]
-
-    total_revenue = sum(order["price"] for order in orders)
-    total_orders = len(orders)
-    feedbacks = db.get("feedbacks", [])
+    total_revenue = sum(order["price"] for order in db["orders"])
+    total_orders = len(db["orders"])
     
     html_code = """
     <!DOCTYPE html>
@@ -737,45 +577,20 @@ def admin_dashboard():
                 <a href="/admin/logout" class="bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold text-xs">Logout</a>
             </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Total Orders</p><h3 class="text-2xl font-bold text-yellow-400">{{ total_orders }}</h3></div>
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Total Revenue</p><h3 class="text-2xl font-bold text-green-400">Rs. {{ total_revenue }}</h3></div>
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Menu Items</p><h3 class="text-2xl font-bold text-blue-400">{{ menu|length }}</h3></div>
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700"><p class="text-gray-400 text-xs">Feedbacks</p><h3 class="text-2xl font-bold text-purple-400">{{ feedbacks|length }}</h3></div>
-            </div>
-
-            <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 mb-6">
-                <h2 class="text-lg font-semibold mb-3 text-yellow-300">⭐ Customer Feedbacks</h2>
-                {% if feedbacks %}
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto">
-                    {% for fb in feedbacks %}
-                    <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 text-xs space-y-1">
-                        <div class="flex justify-between font-bold text-white"><span>{{ fb.name }}</span><span class="text-yellow-400 text-[10px]">{{ fb.rating }}</span></div>
-                        <p class="text-gray-300 italic">"{{ fb.comments }}"</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-gray-400 text-xs">No feedback received yet.</p>
-                {% endif %}
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">📦 Live Orders (Pending)</h2>
-                    {% if live_orders %}
+                    <h2 class="text-lg font-semibold mb-3 text-yellow-300">📦 Live Orders</h2>
+                    {% if orders %}
                         <div class="space-y-3 max-h-[400px] overflow-y-auto">
-                            {% for order in live_orders %}
+                            {% for order in orders %}
                             <div class="bg-gray-700 p-3 rounded-lg border border-gray-600 text-xs">
-                                <div class="flex justify-between items-center mb-1">
-                                    <h4 class="font-bold text-yellow-400">Items:</h4>
-                                    <div class="flex items-center gap-2">
-                                        <span class="bg-green-500 text-gray-900 px-2 py-0.5 rounded font-bold">Rs. {{ order.price }}</span>
-                                        <form action="/admin/clear-order/{{ order.get('id') }}" method="POST">
-                                            <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded font-bold text-[10px] shadow">✅ Clear / Done</button>
-                                        </form>
-                                    </div>
-                                </div>
+                                <div class="flex justify-between items-center mb-1"><h4 class="font-bold text-yellow-400">Items:</h4><span class="bg-green-500 text-gray-900 px-2 py-0.5 rounded font-bold">Rs. {{ order.price }}</span></div>
                                 <p class="text-gray-200 bg-gray-800 p-2 rounded mb-2">{{ order.item }}</p>
                                 <div class="text-gray-300 space-y-0.5 border-t border-gray-600 pt-1">
                                     <p><strong>Name:</strong> {{ order.name }}</p>
@@ -785,21 +600,7 @@ def admin_dashboard():
                             </div>
                             {% endfor %}
                         </div>
-                    {% else %}<p class="text-gray-400 text-xs">No pending orders right now.</p>{% endif %}
-
-                    {% if cleared_orders %}
-                    <div class="mt-6 pt-4 border-t border-gray-700">
-                        <h3 class="text-sm font-semibold mb-2 text-gray-400">📁 Cleared / Completed Orders History</h3>
-                        <div class="space-y-2 max-h-40 overflow-y-auto">
-                            {% for order in cleared_orders %}
-                            <div class="bg-gray-900/60 p-2 rounded-lg border border-gray-800 text-[11px] text-gray-400 flex justify-between items-center">
-                                <div><strong class="text-gray-300">{{ order.name }}</strong> — {{ order.item }} (Rs. {{ order.price }})</div>
-                                <span class="bg-gray-800 text-green-400 px-2 py-0.5 rounded font-bold text-[9px]">Completed</span>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
+                    {% else %}<p class="text-gray-400 text-xs">No pending orders.</p>{% endif %}
                 </div>
 
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
@@ -859,7 +660,7 @@ def admin_dashboard():
     </body>
     </html>
     """
-    return render_template_string(html_code, menu=db.get("menu", []), live_orders=live_orders, cleared_orders=cleared_orders, feedbacks=feedbacks, total_orders=total_orders, total_revenue=total_revenue)
+    return render_template_string(html_code, menu=db["menu"], orders=db["orders"], total_orders=total_orders, total_revenue=total_revenue)
 
 @app.route("/admin/add-item", methods=["POST"])
 def add_item():
