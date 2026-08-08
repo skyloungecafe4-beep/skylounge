@@ -1,212 +1,369 @@
+from flask import Flask, redirect, render_template_string, request, session, url_for
+import os
+import base64
+from database import load_data, save_data
+
+app = Flask(__name__)
+app.secret_key = "sky_lounge_vip_slider_key_v12"
+
+# --- DEFAULT DATA BACKUP ---
 DEFAULT_MENU = [
-    # --- STARTERS ---
-    {
-        "id": 1, "category": "Starters", "name": "Crispy Chicken Strips", 
-        "price_5pc": 750, "price_10pc": 1200, "price": 750, 
-        "desc": "Crispy golden chicken strips served with dip.", 
-        "image": "https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=500"
-    },
-    {
-        "id": 2, "category": "Starters", "name": "Sweet & Chilli Wings", 
-        "price_5pc": 600, "price_10pc": 1200, "price": 600, 
-        "desc": "Tossed in sweet and spicy chilli glaze.", 
-        "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"
-    },
-    {
-        "id": 3, "category": "Starters", "name": "Hot Crispy Wings", 
-        "price_5pc": 450, "price_10pc": 850, "price": 450, 
-        "desc": "Spicy and crunchy chicken wings.", 
-        "image": "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?q=80&w=500"
-    },
-    {
-        "id": 4, "category": "Starters", "name": "Chicken Nuggets", 
-        "price_5pc": 400, "price_10pc": 710, "price": 400, 
-        "desc": "Tender and juicy bite-sized chicken nuggets.", 
-        "image": "https://images.unsplash.com/photo-1562967960-f1f391e55a40?q=80&w=500"
-    },
-    {
-        "id": 5, "category": "Starters", "name": "Chicken Malai Boti Wings", 
-        "price_5pc": 450, "price_10pc": 890, "price": 450, 
-        "desc": "Creamy malai boti flavored chicken wings.", 
-        "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"
-    },
-    {
-        "id": 6, "category": "Starters", "name": "Grill Bake Wings", 
-        "price_5pc": 400, "price_10pc": 780, "price": 400, 
-        "desc": "Smoky grilled and baked chicken wings.", 
-        "image": "https://images.unsplash.com/photo-1567620832903-9fc6debc209f?q=80&w=500"
-    },
-    {
-        "id": 7, "category": "Starters", "name": "Garlic Mayo Fries", 
-        "price": 400, 
-        "desc": "Crispy fries topped with special garlic mayo.", 
-        "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=500"
-    },
-    {
-        "id": 8, "category": "Starters", "name": "Loaded Fries", 
-        "price": 850, 
-        "desc": "Fries loaded with cheese, chicken chunks, and sauces.", 
-        "image": "https://images.unsplash.com/photo-1585109649139-366815a0d713?q=80&w=500"
-    },
-
-    # --- BURGERS ---
-    {"id": 9, "category": "Burgers", "name": "Lava Burger", "price": 1000, "desc": "Overflowing with molten cheese and special patty.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
-    {"id": 10, "category": "Burgers", "name": "Swiss Mushroom", "price": 750, "desc": "Savory mushrooms and Swiss cheese burger.", "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=500"},
-    {"id": 11, "category": "Burgers", "name": "Smokey Shredded", "price": 750, "desc": "Smoky pulled chicken with barbecue notes.", "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=500"},
-    {"id": 12, "category": "Burgers", "name": "Grill Cheese Burger", "price": 750, "desc": "Double grilled cheese layers with juicy patty.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
-    {"id": 13, "category": "Burgers", "name": "Pizza Burger", "price": 650, "desc": "Fusion of pizza flavors inside a burger bun.", "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=500"},
-    {"id": 14, "category": "Burgers", "name": "Double Filly Burger", "price": 750, "desc": "Double crispy chicken fillets with extra sauce.", "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=500"},
-    {"id": 15, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Classic crispy chicken zinger burger.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
-    {"id": 16, "category": "Burgers", "name": "Patty Cheese Burger", "price": 350, "desc": "Juicy chicken patty with melted cheese slice.", "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=500"},
-    {"id": 17, "category": "Burgers", "name": "Chapli Cheese Burger", "price": 350, "desc": "Traditional chapli kebab taste in burger style.", "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?q=80&w=500"},
-
-    # --- PIZZA ---
-    {
-        "id": 18, "category": "Pizza", "name": "Donut Pizza", 
-        "price_s": 0, "price_m": 1550, "price_l": 2200, "price": 1550, 
-        "desc": "Unique donut-shaped crust pizza loaded with cheese.", 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"
-    },
-    {
-        "id": 19, "category": "Pizza", "name": "Chef Recommended", 
-        "price_s": 0, "price_m": 1550, "price_l": 2200, "price": 1550, 
-        "desc": "Special chef's secret topping combination.", 
-        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"
-    },
-    {
-        "id": 20, "category": "Pizza", "name": "Huawei Bazuka", 
-        "price_s": 0, "price_m": 1350, "price_l": 1950, "price": 1350, 
-        "desc": "Heavy loaded special bazuka pizza.", 
-        "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"
-    },
-    {
-        "id": 21, "category": "Pizza", "name": "Lazania", 
-        "price_s": 0, "price_m": 1350, "price_l": 1950, "price": 1350, 
-        "desc": "Lasagna-inspired rich pizza flavor.", 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"
-    },
-    {
-        "id": 22, "category": "Pizza", "name": "Calzone Bite", 
-        "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, 
-        "desc": "Folded pizza crust stuffed with cheese and chicken.", 
-        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"
-    },
-    {
-        "id": 23, "category": "Pizza", "name": "Chicken Supreme", 
-        "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, 
-        "desc": "Loaded with chicken, mushrooms, olives, and cheese.", 
-        "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"
-    },
-    {
-        "id": 24, "category": "Pizza", "name": "Kababish", 
-        "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, 
-        "desc": "Kabab chunks topped with oriental spices.", 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"
-    },
-    {
-        "id": 25, "category": "Pizza", "name": "Royal Crust", 
-        "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, 
-        "desc": "Stuffed crust with royal cheese blend.", 
-        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"
-    },
-    {
-        "id": 26, "category": "Pizza", "name": "Kabab Stuffer", 
-        "price_s": 0, "price_m": 1200, "price_l": 1800, "price": 1200, 
-        "desc": "Stuffed kabab edges with rich cheese.", 
-        "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"
-    },
-    {
-        "id": 27, "category": "Pizza", "name": "Chicken Cheese", 
-        "price_s": 750, "price_m": 1150, "price_l": 1700, "price": 1150, 
-        "desc": "Simple chicken and extra cheese loaded pizza.", 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"
-    },
-    {
-        "id": 28, "category": "Pizza", "name": "Smokey BBQ", 
-        "price_s": 750, "price_m": 1150, "price_l": 1700, "price": 1150, 
-        "desc": "Smoky barbecue chicken with onions and herbs.", 
-        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"
-    },
-    {
-        "id": 29, "category": "Pizza", "name": "Malai Boti", 
-        "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, 
-        "desc": "Creamy malai boti chunks on pizza base.", 
-        "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"
-    },
-    {
-        "id": 30, "category": "Pizza", "name": "Chicken Tikka", 
-        "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, 
-        "desc": "Traditional spicy chicken tikka chunks.", 
-        "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"
-    },
-    {
-        "id": 31, "category": "Pizza", "name": "Chicken Fajita", 
-        "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, 
-        "desc": "Fajita seasoned chicken with capsicum and onions.", 
-        "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=500"
-    },
-    {
-        "id": 32, "category": "Pizza", "name": "Behari Kabab", 
-        "price_s": 700, "price_m": 1050, "price_l": 1600, "price": 1050, 
-        "desc": "Flavorful behari kabab strips with oriental spices.", 
-        "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500"
-    },
-
-    # --- WRAPS ---
-    {"id": 33, "category": "Wraps", "name": "Chicken Shawarma", "price": 350, "desc": "Classic chicken shawarma with garlic sauce.", "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=500"},
-    {"id": 34, "category": "Wraps", "name": "Zinger Shawarma", "price": 500, "desc": "Crispy zinger fillet wrapped in tortilla.", "image": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?q=80&w=500"},
-    {"id": 35, "category": "Wraps", "name": "Malai Boti Shawarma", "price": 450, "desc": "Creamy malai boti wrapped with fresh veggies.", "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=500"},
-    {"id": 36, "category": "Wraps", "name": "Platter Shawarma", "price": 750, "desc": "Open shawarma platter with extra chicken and fries.", "image": "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=500"},
-    {"id": 37, "category": "Wraps", "name": "Grill Chicken Wrap", "price": 600, "desc": "Smoky grilled chicken wrapped securely.", "image": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?q=80&w=500"},
-    {"id": 38, "category": "Wraps", "name": "Daynamight Wrap", "price": 590, "desc": "Spicy dynamite sauce coated chicken wrap.", "image": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=500"},
-    {"id": 39, "category": "Wraps", "name": "Chicken Partha", "price": 350, "desc": "Crispy paratha roll stuffed with spicy chicken.", "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=500"},
-    {"id": 40, "category": "Wraps", "name": "Malai Paratha", "price": 450, "desc": "Paratha roll filled with creamy malai boti.", "image": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=500"},
-
-    # --- CHINESE ---
-    {"id": 41, "category": "Chinese", "name": "Manchurian", "price": 1050, "desc": "Classic chicken manchurian served with rice.", "image": "https://images.unsplash.com/photo-1525755662778-989d0524087e?q=80&w=500"},
-    {"id": 42, "category": "Chinese", "name": "Chicken Chilli Dry", "price": 1100, "desc": "Spicy dry chicken with green chilies and soy sauce.", "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=500"},
-    {"id": 43, "category": "Chinese", "name": "Chicken Cashew Nut", "price": 1250, "desc": "Stir-fried chicken with crunchy cashew nuts.", "image": "https://images.unsplash.com/photo-1512058564366-18510be2db19?q=80&w=500"},
-    {"id": 44, "category": "Chinese", "name": "Chow Mein", "price": 1050, "desc": "Stir-fried noodles tossed with vegetables and chicken.", "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?q=80&w=500"},
-    {"id": 45, "category": "Chinese", "name": "Pepper Chicken Strips", "price": 1100, "desc": "Juicy strips tossed in black pepper sauce.", "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=500"},
-    {"id": 46, "category": "Chinese", "name": "Egg Fried Rice", "price": 350, "desc": "Flavorful fried rice tossed with eggs and veggies.", "image": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=500"},
-
-    # --- SANDWICH ---
-    {"id": 47, "category": "Sandwich", "name": "Special Malai Boti", "price": 900, "desc": "Rich malai boti filled sandwich.", "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=500"},
-    {"id": 48, "category": "Sandwich", "name": "Crunchy Sandwich", "price": 850, "desc": "Crispy fried chicken layers in toasted bread.", "image": "https://images.unsplash.com/photo-1554471062-e3d64024b81b?q=80&w=500"},
-    {"id": 49, "category": "Sandwich", "name": "Fajita Sandwich", "price": 750, "desc": "Spicy fajita chicken chunks with melted cheese.", "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=500"},
-    {"id": 50, "category": "Sandwich", "name": "Filly Cheese Steak", "price": 750, "desc": "Steak strips loaded with cheese in sub bread.", "image": "https://images.unsplash.com/photo-1554471062-e3d64024b81b?q=80&w=500"},
-    {"id": 51, "category": "Sandwich", "name": "Grill Club", "price": 550, "desc": "Triple-decker classic grilled club sandwich.", "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=500"},
-    {"id": 52, "category": "Sandwich", "name": "Spread Chicken Cold Sandwich", "price": 550, "desc": "Creamy spread chicken cold sandwich.", "image": "https://images.unsplash.com/photo-1554471062-e3d64024b81b?q=80&w=500"},
-
-    # --- PASTA ---
-    {"id": 53, "category": "Pasta", "name": "Fetuccin Alfredo", "price": 900, "desc": "Creamy fettuccine pasta with rich white sauce and mushrooms.", "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=500"},
-    {"id": 54, "category": "Pasta", "name": "Mexican", "price": 850, "desc": "Spicy Mexican style pasta with herbs.", "image": "https://images.unsplash.com/photo-1621996346565-e3d5d6281229?q=80&w=500"},
-    {"id": 55, "category": "Pasta", "name": "Mac & Cheese", "price": 750, "desc": "Classic macaroni smothered in gooey melted cheese.", "image": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=500"},
-    {"id": 56, "category": "Pasta", "name": "White Sauce Oven Baked", "price": 750, "desc": "Oven-baked white sauce pasta topped with cheese.", "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?q=80&w=500"},
-
-    # --- HOT & COLD BAR ---
-    {"id": 57, "category": "Hot & Cold Bar", "name": "Mint Margita", "price": 300, "desc": "Refreshing mint and lemon cold drink.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
-    {"id": 58, "category": "Hot & Cold Bar", "name": "Fresh Lime", "price": 150, "desc": "Traditional fresh lime juice.", "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500"},
-    {"id": 59, "category": "Hot & Cold Bar", "name": "Lemonade Slush", "price": 250, "desc": "Icy crushed lemonade slush.", "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500"},
-    {"id": 60, "category": "Hot & Cold Bar", "name": "Pina Colada", "price": 400, "desc": "Tropical coconut and pineapple blend.", "image": "https://images.unsplash.com/photo-1541658016709-82535e94bc69?q=80&w=500"},
-    {"id": 61, "category": "Hot & Cold Bar", "name": "Oreo Shake", "price": 400, "desc": "Creamy shake blended with Oreo cookies.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 62, "category": "Hot & Cold Bar", "name": "Mango Shake", "price": 400, "desc": "Fresh sweet mango thick shake.", "image": "https://images.unsplash.com/photo-1553530666-ba11a7da3888?q=80&w=500"},
-    {"id": 63, "category": "Hot & Cold Bar", "name": "Browine Shake", "price": 450, "desc": "Rich chocolate brownie blended into a shake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 64, "category": "Hot & Cold Bar", "name": "Blueberry Mojito", "price": 370, "desc": "Sparkling blueberry flavored mojito.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
-    {"id": 65, "category": "Hot & Cold Bar", "name": "Strawberry Majito", "price": 370, "desc": "Refreshing strawberry mint mojito.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
-    {"id": 66, "category": "Hot & Cold Bar", "name": "Blueberry Shake", "price": 400, "desc": "Creamy shake with blueberry essence.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 67, "category": "Hot & Cold Bar", "name": "Strawberry Shake", "price": 400, "desc": "Fresh strawberry thick shake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 68, "category": "Hot & Cold Bar", "name": "Hazulnut Shake", "price": 400, "desc": "Smooth hazelnut flavored milkshake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 69, "category": "Hot & Cold Bar", "name": "Peach Iced Tea", "price": 370, "desc": "Chilled peach flavored iced tea.", "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?q=80&w=500"},
-    {"id": 70, "category": "Hot & Cold Bar", "name": "Blue Lagoon", "price": 370, "desc": "Vibrant blue citrus refreshing drink.", "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=500"},
-    {"id": 71, "category": "Hot & Cold Bar", "name": "Vanilla Shake", "price": 400, "desc": "Classic creamy vanilla shake.", "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=500"},
-    {"id": 72, "category": "Hot & Cold Bar", "name": "Cold Coffee", "price": 400, "desc": "Chilled blended creamy coffee.", "image": "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=500"},
-    {"id": 73, "category": "Hot & Cold Bar", "name": "Karak Chai", "price": 150, "desc": "Strong traditional hot milk tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
-    {"id": 74, "category": "Hot & Cold Bar", "name": "Cappuccino", "price": 350, "desc": "Rich espresso with steamed milk foam.", "image": "https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=500"},
-    {"id": 75, "category": "Hot & Cold Bar", "name": "Cardamom Tea", "price": 180, "desc": "Aromatic green cardamom infused tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
-    {"id": 76, "category": "Hot & Cold Bar", "name": "Cinnamon Tea", "price": 180, "desc": "Warm tea with natural cinnamon spice.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
-    {"id": 77, "category": "Hot & Cold Bar", "name": "Ginger Tea", "price": 180, "desc": "Refreshing ginger spiced tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
-    {"id": 78, "category": "Hot & Cold Bar", "name": "Green Tea", "price": 150, "desc": "Light and healthy green tea.", "image": "https://images.unsplash.com/photo-1627435601361-ec25f5b1d0e5?q=80&w=500"},
-    {"id": 79, "category": "Hot & Cold Bar", "name": "Gur Wali Chai", "price": 180, "desc": "Traditional jaggery (gur) sweet tea.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"},
-    {"id": 80, "category": "Hot & Cold Bar", "name": "Doodh Pati", "price": 180, "desc": "Rich tea brewed purely in thick milk.", "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?q=80&w=500"}
+    {"id": 1, "category": "Burgers", "name": "Zinger Burger", "price": 450, "desc": "Crispy chicken fillet with special sauce.", "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=500"},
+    {"id": 2, "category": "Pizza", "name": "Chicken Supreme (M)", "price_s": 800, "price_m": 1300, "price_l": 1900, "price": 1300, "desc": "Loaded with chicken, mushrooms, and olives.", "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500"},
+    {"id": 3, "category": "Starters", "name": "Hot Crispy Wings (5pc)", "price_5pc": 450, "price_10pc": 850, "price": 450, "desc": "Spicy and crunchy chicken wings.", "image": "https://images.unsplash.com/photo-1527477396000-e27163b481c2?q=80&w=500"}
 ]
+
+DEFAULT_SLIDERS = [
+    {"id": 1, "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1920"},
+    {"id": 2, "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1920"},
+    {"id": 3, "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1920"}
+]
+
+def get_db_safe():
+    db = load_data()
+    if not isinstance(db, dict):
+        db = {}
+    if "menu" not in db or not db["menu"]:
+        db["menu"] = DEFAULT_MENU
+    if "sliders" not in db or not db["sliders"] or len(db["sliders"]) == 0:
+        db["sliders"] = DEFAULT_SLIDERS
+    if "orders" not in db:
+        db["orders"] = []
+    save_data(db)
+    return db
+
+# --- 1. CUSTOMER PORTAL ---
+@app.route("/")
+def customer_portal():
+    db = get_db_safe()
+    
+    categories = {}
+    for item in db.get("menu", DEFAULT_MENU):
+        cat = item.get("category", "Others")
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(item)
+
+    slider_list = db.get("sliders", DEFAULT_SLIDERS)
+
+    html_code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sky Lounge Cafe - Kasur</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            .slider-container { position: relative; overflow: hidden; width: 100%; height: 260px; }
+            @media(min-width: 768px) { .slider-container { height: 420px; } }
+            .slider-wrapper { display: flex; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; width: 100%; }
+            .slide { min-width: 100%; height: 100%; flex-shrink: 0; }
+            .slide img { width: 100%; height: 100%; object-fit: cover; }
+            .slider-nav { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }
+            .nav-dot { width: 10px; height: 10px; background: rgba(255, 255, 255, 0.5); border-radius: 50%; cursor: pointer; transition: all 0.3s; }
+            .nav-dot.active { background: #e11d48; width: 25px; border-radius: 5px; }
+        </style>
+    </head>
+    <body class="bg-gray-950 text-white min-h-screen font-sans">
+        
+        <div class="bg-gray-900 border-b border-gray-800 py-3 px-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-black tracking-widest text-yellow-400 uppercase">⚡ SKY LOUNGE CAFE</span>
+            </div>
+            <a href="/cart" class="bg-red-600 hover:bg-red-500 text-white px-4 py-1.5 rounded-full font-black text-xs transition shadow flex items-center gap-1.5">
+                🛒 BUCKET (<span id="cart-count">0</span>)
+            </a>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 pt-6 pb-2 space-y-4">
+            
+            <div class="bg-gradient-to-r from-red-950 via-gray-900 to-gray-950 py-6 px-4 text-center rounded-3xl border border-red-900/50 shadow-xl">
+                <h1 class="text-3xl md:text-6xl font-black tracking-widest text-yellow-400 uppercase drop-shadow-lg">SKY LOUNGE CAFE</h1>
+                <p class="text-gray-200 text-xs md:text-base mt-2 font-bold tracking-wide">📍 Cinema Mor, Opp PSO Petrol Pump, Kasur</p>
+            </div>
+
+            <div class="bg-gray-900 rounded-3xl overflow-hidden border border-yellow-500/25 shadow-2xl">
+                <div class="slider-container bg-black" id="main-slider">
+                    <div class="slider-wrapper" id="slider-wrapper">
+                        {% for s in slider_list %}
+                        <div class="slide"><img src="{{ s.image }}" alt="Cafe Menu Slide"></div>
+                        {% endfor %}
+                    </div>
+                    <div class="slider-nav" id="slider-dots">
+                        {% for s in slider_list %}
+                        <span class="nav-dot {% if loop.first %}active{% endif %}" onclick="currentSlide({{ loop.index0 }})"></span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-10 mb-20">
+            
+            <nav class="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {% for cat_name in categories.keys() %}
+                <a href="#cat-{{ cat_name }}" class="bg-gray-900 hover:bg-red-600 text-gray-300 hover:text-white px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border border-gray-800 transition shadow">{{ cat_name }}</a>
+                {% endfor %}
+            </nav>
+
+            {% for cat_name, items in categories.items() %}
+            <section id="cat-{{ cat_name }}" class="pt-4">
+                <div class="border-l-4 border-red-600 pl-3 mb-6">
+                    <h2 class="text-2xl md:text-3xl font-black tracking-wider text-yellow-400 uppercase">{{ cat_name }}</h2>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for item in items %}
+                    <div class="bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-xl flex flex-col justify-between group hover:border-yellow-500/50 transition-all">
+                        <div>
+                            <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+                            <div class="p-4">
+                                <h3 class="text-lg font-bold text-white group-hover:text-yellow-400 transition">{{ item.name }}</h3>
+                                <p class="text-gray-400 text-xs mt-1 line-clamp-2">{{ item.get('desc', 'Freshly prepared meal') }}</p>
+                                <p class="text-red-500 font-black text-xl mt-3">
+                                    {% if item.category == 'Pizza' %}
+                                        From Rs. {{ item.get('price_s', 0) }}
+                                    {% elif item.category == 'Starters' %}
+                                        Rs. {{ item.get('price_5pc', 0) }}
+                                    {% else %}
+                                        Rs. {{ item.get('price', 0) }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 pt-0">
+                            <a href="/item-detail?id={{ item.id }}" class="block text-center bg-red-600 hover:bg-red-500 text-white font-black py-2.5 rounded-xl shadow transition text-xs tracking-wider">+ ADD TO BUCKET</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </main>
+
+        <div class="fixed bottom-5 right-5 z-50">
+            <a href="https://wa.me/923093478600?text=Hello%20Sky%20Lounge%20Cafe,%20I%20want%20to%20order." target="_blank" class="bg-green-600 hover:bg-green-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition transform hover:scale-110 border-2 border-white/20">
+                <span class="text-xl">💬</span>
+            </a>
+        </div>
+
+        <script>
+            let slideIndex = 0;
+            const slidesWrapper = document.getElementById('slider-wrapper');
+            const totalSlides = slidesWrapper ? slidesWrapper.children.length : 0;
+            const dots = document.querySelectorAll('.nav-dot');
+
+            function showSlides() {
+                if(!slidesWrapper || totalSlides === 0) return;
+                if(slideIndex >= totalSlides) slideIndex = 0;
+                if(slideIndex < 0) slideIndex = totalSlides - 1;
+                
+                slidesWrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
+                dots.forEach((dot, idx) => {
+                    if(dot) {
+                        if(idx === slideIndex) dot.classList.add('active');
+                        else dot.classList.remove('active');
+                    }
+                });
+            }
+
+            function currentSlide(n) {
+                slideIndex = n;
+                showSlides();
+            }
+
+            if(totalSlides > 1) {
+                setInterval(() => {
+                    slideIndex = (slideIndex + 1) % totalSlides;
+                    showSlides();
+                }, 4000);
+            }
+
+            function updateCartCount() {
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
+                let totalQty = cart.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+                let countEl = document.getElementById('cart-count');
+                if(countEl) countEl.innerText = totalQty;
+            }
+            updateCartCount();
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html_code, categories=categories, slider_list=slider_list)
+
+# --- 2. ITEM DETAIL POPUP ---
+@app.route("/item-detail")
+def item_detail():
+    db = get_db_safe()
+    try: item_id = int(request.args.get("id"))
+    except: return redirect("/")
+        
+    selected_item = next((item for item in db.get("menu", []) if item["id"] == item_id), None)
+    if not selected_item: return redirect("/")
+        
+    html_code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ item.name }} - Sky Lounge Cafe</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-black/85 text-white min-h-screen flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-yellow-500/30 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden relative">
+            <a href="/" class="absolute top-4 right-4 bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow z-10">✕</a>
+            
+            <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-56 object-cover">
+            
+            <div class="p-6">
+                <h2 class="text-2xl font-black text-yellow-400 mb-1">{{ item.name }}</h2>
+                <p class="text-gray-300 text-xs mb-4 leading-relaxed">{{ item.get('desc', 'Delicious item') }}</p>
+                
+                <div class="space-y-4 mb-6">
+                    {% if item.category == 'Pizza' %}
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-bold">SELECT SIZE</label>
+                        <select id="pizza-size" onchange="updatePizzaPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white font-bold text-sm">
+                            <option value="Small (S)" data-price="{{ item.get('price_s', 0) }}">Small (S) - Rs. {{ item.get('price_s', 0) }}</option>
+                            <option value="Medium (M)" data-price="{{ item.get('price_m', item.get('price', 0)) }}" selected>Medium (M) - Rs. {{ item.get('price_m', item.get('price', 0)) }}</option>
+                            <option value="Large (L)" data-price="{{ item.get('price_l', 0) }}">Large (L) - Rs. {{ item.get('price_l', 0) }}</option>
+                        </select>
+                    </div>
+                    <p class="text-red-500 font-black text-2xl" id="display-price">Rs. {{ item.get('price_m', item.get('price', 0)) }}</p>
+
+                    {% elif item.category == 'Starters' %}
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-bold">SELECT PORTION</label>
+                        <select id="starter-pc" onchange="updateStarterPrice()" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white font-bold text-sm">
+                            <option value="5 Pieces" data-price="{{ item.get('price_5pc', 0) }}">5 Pieces - Rs. {{ item.get('price_5pc', 0) }}</option>
+                            <option value="10 Pieces" data-price="{{ item.get('price_10pc', 0) }}">10 Pieces - Rs. {{ item.get('price_10pc', 0) }}</option>
+                        </select>
+                    </div>
+                    <p class="text-red-500 font-black text-2xl" id="display-price">Rs. {{ item.get('price_5pc', 0) }}</p>
+
+                    {% else %}
+                    <p class="text-red-500 font-black text-2xl">Rs. {{ item.get('price', 0) }}</p>
+                    {% endif %}
+
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-bold">QUANTITY</label>
+                        <div class="flex items-center space-x-3">
+                            <button type="button" onclick="decreaseQty()" class="bg-gray-800 text-white w-10 h-10 rounded-xl font-bold text-lg">-</button>
+                            <input type="number" id="qty" value="1" min="1" max="10" readonly class="w-16 text-center bg-gray-800 border border-gray-700 rounded-xl py-2 text-white font-bold text-lg">
+                            <button type="button" onclick="increaseQty()" class="bg-gray-800 text-white w-10 h-10 rounded-xl font-bold text-lg">+</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="addToCart()" class="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3.5 rounded-xl shadow transition text-sm tracking-wider">
+                    ADD TO BUCKET
+                </button>
+            </div>
+        </div>
+
+        <script>
+            function updatePizzaPrice() {
+                let select = document.getElementById('pizza-size');
+                let price = select.options[select.selectedIndex].getAttribute('data-price');
+                document.getElementById('display-price').innerText = "Rs. " + price;
+            }
+            function updateStarterPrice() {
+                let select = document.getElementById('starter-pc');
+                let price = select.options[select.selectedIndex].getAttribute('data-price');
+                document.getElementById('display-price').innerText = "Rs. " + price;
+            }
+            function increaseQty() {
+                let input = document.getElementById('qty');
+                if(parseInt(input.value) < 10) input.value = parseInt(input.value) + 1;
+            }
+            function decreaseQty() {
+                let input = document.getElementById('qty');
+                if(parseInt(input.value) > 1) input.value = parseInt(input.value) - 1;
+            }
+            function addToCart() {
+                let baseName = "{{ item.name }}";
+                let itemCategory = "{{ item.category }}";
+                let variant = "";
+                let itemPrice = parseFloat("{{ item.get('price', item.get('price_m', item.get('price_5pc', 0))) }}");
+
+                if (itemCategory === 'Pizza') {
+                    let select = document.getElementById('pizza-size');
+                    variant = select.value;
+                    itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
+                } else if (itemCategory === 'Starters') {
+                    let select = document.getElementById('starter-pc');
+                    variant = select.value;
+                    itemPrice = parseFloat(select.options[select.selectedIndex].getAttribute('data-price'));
+                }
+
+                let itemQty = parseInt(document.getElementById('qty').value);
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
+                
+                let existingItem = cart.find(i => i.name === baseName && i.variant === variant);
+                if (existingItem) {
+                    existingItem.qty = parseInt(existingItem.qty) + itemQty;
+                } else {
+                    cart.push({ name: baseName, variant: variant, price: itemPrice, qty: itemQty });
+                }
+
+                localStorage.setItem('sky_cart', JSON.stringify(cart));
+                window.location.href = "/";
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html_code, item=selected_item)
+
+# --- 3. VIEW CART ---
+@app.route("/cart")
+def view_cart():
+    html_code = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Your Bucket - Sky Lounge Cafe</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-950 text-white min-h-screen p-4 font-sans flex items-center justify-center">
+        <div class="max-w-lg w-full bg-gray-900 border border-gray-800 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-2xl font-black text-yellow-400 mb-4 text-center">🛒 YOUR FOOD BUCKET</h2>
+            
+            <div id="cart-container"></div>
+
+            <div id="checkout-form-section" style="display:none;" class="mt-4 border-t border-gray-800 pt-4">
+                <form onsubmit="submitOrder(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-semibold">Your Full Name</label>
+                        <input type="text" id="c_name" placeholder="e.g. Asad Ali" required class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-semibold">Phone Number</label>
+                        <input type="text" id="c_phone" placeholder="e.g. 03093478600" required class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-yellow-300 mb-1 font-semibold">Delivery Address</label>
+                        <textarea id="c_address" placeholder="House #, Street, Area..." required rows="2" class="w-full bg-gray-800 border border-gray-700 rounded-xl p-3 text-white text-sm"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-black py-3.5 rounded-xl shadow transition text-sm">PLACE FINAL ORDER</button>
+                </form>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="/" class="text-xs text-yellow-400 hover:underline font-semibold">← Back to Menu</a>
+            </div>
+        </div>
+
+        <script>
+            function loadCart() {
+                let cart = JSON.parse(localStorage.getItem('sky_cart') || '[]');
+                let container = document.getElementById('cart-container');
+                let checkoutSection = document.getElementById('checkout-form-section');
+
+                if (cart.length === 0) {
